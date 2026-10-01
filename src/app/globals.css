@@ -1,26 +1,71 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  color-scheme: light;
+  --background: #f6f6f4;
+  --surface: #fcfcfb;
+  --surface-2: #efeeea;
+  --border: #e2e1dc;
+  --foreground: #0b0b0b;
+  --muted: #52514e;
+  --accent: #2a78d6;
+  --accent-soft: #cde2fb;
+  --streak: #eb6834;
+  --danger: #c4314b;
+  /* Rampa secuencial (azul) para el heatmap: de "nada" a "mucho". */
+  --heat-0: #efeeea;
+  --heat-1: #b7d3f6;
+  --heat-2: #6da7ec;
+  --heat-3: #2a78d6;
+  --heat-4: #184f95;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: dark;
+    --background: #121211;
+    --surface: #1a1a19;
+    --surface-2: #262624;
+    --border: #33332f;
+    --foreground: #ffffff;
+    --muted: #c3c2b7;
+    --accent: #3987e5;
+    --accent-soft: #184f95;
+    --streak: #d95926;
+    --danger: #e0566e;
+    --heat-0: #262624;
+    --heat-1: #104281;
+    --heat-2: #1c5cab;
+    --heat-3: #3987e5;
+    --heat-4: #86b6ef;
   }
+}
+
+/*
+ * Alias para los componentes de Clerk: Clerk define internamente variables
+ * genéricas como --accent y --border y pisaría las nuestras. Se resuelven en
+ * :root, así que siguen el modo claro/oscuro.
+ */
+:root {
+  --app-accent: var(--accent);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-streak: var(--streak);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }

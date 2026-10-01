@@ -1,36 +1,72 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Habit Tracker
 
-## Getting Started
+App para registrar hábitos, mantener rachas y ver estadísticas. Hecha con
+Next.js 16 (App Router), React 19, TypeScript y Tailwind CSS 4.
 
-First, run the development server:
+## Funcionalidades
+
+- **Frecuencias**: todos los días, días específicos de la semana (p. ej. L·X·V)
+  o N veces por semana.
+- **Rachas** por hábito (en días o en semanas según la frecuencia) y una
+  **racha general**: días seguidos en que completaste todos los hábitos con días
+  fijos. El día de hoy (o la semana actual) queda "pendiente" y no corta la racha.
+- **Estadísticas**: racha actual y mejor racha, % de cumplimiento en los últimos
+  30 días, heatmap de actividad y check-ins por semana.
+- Marcar días pasados (flechas en la pantalla "Hoy"), archivar y borrar hábitos.
+- Exportar / importar los datos en JSON.
+
+- **Cuentas** con [Clerk](https://clerk.com) y datos guardados en
+  [Supabase](https://supabase.com), protegidos por Row Level Security: cada
+  usuario sólo puede leer y escribir sus propios hábitos.
+
+## Configuración
+
+1. **Clerk**: creá una aplicación en <https://dashboard.clerk.com> y copiá las
+   API keys.
+2. **Supabase**: creá un proyecto en <https://supabase.com/dashboard>.
+3. **Conectar Clerk con Supabase**:
+   - En Clerk: _Integrations → Supabase_ (o
+     <https://dashboard.clerk.com/setup/supabase>) → **Activate Supabase
+     integration** y copiá el _Clerk domain_. Esto agrega al token de sesión el
+     claim `role: authenticated` que Supabase necesita.
+   - En Supabase: _Authentication → Sign In / Providers → Third-Party Auth →
+     Add provider → Clerk_ y pegá el dominio.
+4. **Tablas**: en Supabase, _SQL Editor_, ejecutá
+   [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql)
+   (o `supabase db push` si usás la CLI de Supabase).
+5. **Variables de entorno**: copiá `.env.example` a `.env.local` y completalo.
+6. `npm run dev`.
+
+Si en el navegador quedaron datos de la versión anterior (sin cuenta), la app
+ofrece importarlos a tu cuenta al iniciar sesión.
+
+## Scripts
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run dev        # servidor de desarrollo en http://localhost:3000
+npm run build      # build de producción
+npm start          # servir el build
+npm test           # tests (Vitest)
+npm run lint       # ESLint
+npm run typecheck  # tsc --noEmit
+npm run format     # Prettier
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Estructura
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  proxy.ts             Clerk: exige sesión en todo salvo /sign-in y /sign-up
+  app/
+    (app)/             rutas con sesión: / (Hoy), /habitos, /estadisticas
+    sign-in/, sign-up/ pantallas de Clerk
+  components/          vistas y gráficos (client components)
+  lib/
+    types.ts           modelo de datos
+    dates.ts           helpers de fechas (claves YYYY-MM-DD, semana lunes–domingo)
+    habits.ts          lógica de rachas y estadísticas (con tests)
+    supabase.ts        cliente de Supabase con el token de Clerk
+    store.tsx          HabitStoreProvider + hook useHabits (carga y escritura
+                       optimista en Supabase)
+supabase/migrations/   esquema SQL y políticas RLS
+```
