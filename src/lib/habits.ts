@@ -189,3 +189,14 @@ export function describeFrequency(frequency: Frequency): string {
       return `${frequency.count} ${frequency.count === 1 ? "vez" : "veces"} por semana`;
   }
 }
+
+/**
+ * Aplica el nuevo orden de una lista filtrada (`subset`) al orden completo
+ * (`all`): los elementos del subconjunto ocupan los mismos lugares que antes,
+ * pero en el orden nuevo; el resto no se mueve.
+ */
+export function reorderSubset(all: string[], subset: string[]): string[] {
+  const members = new Set(subset);
+  let i = 0;
+  return all.map((id) => (members.has(id) ? subset[i++] : id));
+}

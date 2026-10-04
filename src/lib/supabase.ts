@@ -21,8 +21,11 @@ export function useSupabase(): SupabaseClient {
       );
     }
     return createClient(SUPABASE_URL, SUPABASE_KEY, {
-      // El token se pide en cada request, así siempre está vigente.
-      accessToken: async () => (await getToken()) ?? null,
+      // El token se pide en cada request, así siempre está vigente. En el
+      // render del servidor no hay sesión del navegador (Realtime lo pide al
+      // crear el cliente): ahí no se hacen requests, así que va sin token.
+      accessToken: async () =>
+        typeof window === "undefined" ? null : ((await getToken()) ?? null),
     });
   }, [getToken]);
 }

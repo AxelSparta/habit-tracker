@@ -31,9 +31,10 @@ Next.js 16 (App Router), React 19, TypeScript y Tailwind CSS 4.
      claim `role: authenticated` que Supabase necesita.
    - En Supabase: _Authentication → Sign In / Providers → Third-Party Auth →
      Add provider → Clerk_ y pegá el dominio.
-4. **Tablas**: en Supabase, _SQL Editor_, ejecutá
-   [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql)
-   (o `supabase db push` si usás la CLI de Supabase).
+4. **Tablas**: en Supabase, _SQL Editor_, ejecutá en orden los archivos de
+   [`supabase/migrations/`](supabase/migrations/) (`0001_init.sql`,
+   `0002_habit_position.sql`, …) o `supabase db push` si usás la CLI de
+   Supabase.
 5. **Variables de entorno**: copiá `.env.example` a `.env.local` y completalo.
 6. `npm run dev`.
 

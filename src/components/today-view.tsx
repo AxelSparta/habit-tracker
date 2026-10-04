@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { addDays, formatLong, startOfWeek, todayKey } from "@/lib/dates";
 import {
   bestStreak,
@@ -9,17 +9,21 @@ import {
   getGlobalDays,
   getPeriods,
   isScheduledOn,
+  reorderSubset,
   streakUnit,
   weekCount,
 } from "@/lib/habits";
 import { useHabits, type HabitActions } from "@/lib/store";
 import type { Habit } from "@/lib/types";
+import { HabitForm } from "./habit-form";
+import { SortableList } from "./sortable-list";
 import { Card, EmptyState, Loading, StreakBadge } from "./ui";
 
 export function TodayView() {
   const { data, actions } = useHabits();
   const today = todayKey();
   const [day, setDay] = useState(today);
+  const [adding, setAdding] = useState(false);
 
   const global = useMemo(() => {
     if (!data) return null;
@@ -30,14 +34,49 @@ export function TodayView() {
   if (!data || !global) return <Loading />;
 
   const habits = data.habits.filter((h) => !h.archived && h.createdAt <= day);
+  const newHabit = adding && (
+    <Card>
+      <h2 className="mb-4 font-semibold">Nuevo hábito</h2>
+      <HabitForm
+        autoFocus
+        submitLabel="Crear hábito"
+        onSubmit={(input) => {
+          actions.addHabit(input);
+          setAdding(false);
+        }}
+        onCancel={() => setAdding(false)}
+      />
+    </Card>
+  );
+
   if (data.habits.filter((h) => !h.archived).length === 0) {
     return (
-      <EmptyState
-        title="Todavía no tenés hábitos"
-        text="Creá tu primer hábito y empezá a construir tu racha."
-      />
+      newHabit || (
+        <EmptyState
+          title="Todavía no tenés hábitos"
+          text="Creá tu primer hábito y empezá a construir tu racha."
+          action={
+            <button
+              onClick={() => setAdding(true)}
+              className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+            >
+              Crear un hábito
+            </button>
+          }
+        />
+      )
     );
   }
+
+  // Reordenar una de las dos listas mueve esos hábitos dentro del orden total.
+  const reorder = (ids: string[]) =>
+    actions.reorderHabits(
+      reorderSubset(
+        data.habits.map((h) => h.id),
+        ids,
+      ),
+    );
+  const label = (h: Habit) => h.name;
 
   const dueToday = habits.filter(
     (h) => h.frequency.type === "timesPerWeek" || isScheduledOn(h, day),
@@ -103,37 +142,58 @@ export function TodayView() {
         </Card>
       </div>
 
-      <ul className="space-y-2">
-        {dueToday.map((h) => (
-          <HabitRow
-            key={h.id}
-            actions={actions}
-            habit={h}
-            day={day}
-            today={today}
-            done={data.completions[h.id] ?? []}
-          />
-        ))}
-      </ul>
+      <div className="space-y-2">
+        <SortableList
+          items={dueToday}
+          getLabel={label}
+          onReorder={reorder}
+          className="space-y-2"
+          renderItem={(h, handle) => (
+            <HabitRow
+              actions={actions}
+              habit={h}
+              day={day}
+              today={today}
+              done={data.completions[h.id] ?? []}
+              handle={handle}
+            />
+          )}
+        />
+        {newHabit || (
+          <button
+            onClick={() => setAdding(true)}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+          >
+            <span aria-hidden className="text-lg leading-none">
+              +
+            </span>
+            Nuevo hábito
+          </button>
+        )}
+      </div>
 
       {notToday.length > 0 && (
         <div>
           <h2 className="mb-2 text-sm font-medium text-muted">
             No toca este día
           </h2>
-          <ul className="space-y-2 opacity-60">
-            {notToday.map((h) => (
+          <SortableList
+            items={notToday}
+            getLabel={label}
+            onReorder={reorder}
+            className="space-y-2 opacity-60"
+            renderItem={(h, handle) => (
               <HabitRow
-                key={h.id}
                 actions={actions}
                 habit={h}
                 day={day}
                 today={today}
                 done={data.completions[h.id] ?? []}
+                handle={handle}
                 disabled
               />
-            ))}
-          </ul>
+            )}
+          />
         </div>
       )}
 
@@ -152,6 +212,7 @@ function HabitRow({
   day,
   today,
   done,
+  handle,
   disabled = false,
 }: {
   actions: HabitActions;
@@ -159,6 +220,8 @@ function HabitRow({
   day: string;
   today: string;
   done: string[];
+  /** Manija para reordenar arrastrando. */
+  handle: ReactNode;
   disabled?: boolean;
 }) {
   const set = new Set(done);
@@ -166,16 +229,19 @@ function HabitRow({
   const streak = currentStreak(getPeriods(habit, set, today));
 
   return (
-    <li>
+    <div
+      className={`flex items-stretch rounded-xl border pl-1.5 transition-colors ${
+        checked
+          ? "border-accent bg-accent-soft/40"
+          : "border-border bg-surface has-[button:enabled:hover]:bg-surface-2"
+      }`}
+    >
+      {handle}
       <button
         onClick={() => actions.toggleCompletion(habit.id, day, checked)}
         disabled={disabled}
         aria-pressed={checked}
-        className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors sm:p-4 ${
-          checked
-            ? "border-accent bg-accent-soft/40"
-            : "border-border bg-surface hover:bg-surface-2"
-        } disabled:cursor-not-allowed`}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-r-xl py-3 pr-3 pl-1.5 text-left disabled:cursor-not-allowed sm:py-4 sm:pr-4"
       >
         <span className="text-2xl" aria-hidden>
           {habit.emoji}
@@ -198,6 +264,6 @@ function HabitRow({
           {checked && "✓"}
         </span>
       </button>
-    </li>
+    </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   currentStreak,
   getGlobalDays,
   getPeriods,
+  reorderSubset,
 } from "./habits";
 import type { Frequency, Habit } from "./types";
 
@@ -19,6 +20,7 @@ function habit(frequency: Frequency, createdAt = "2026-09-01"): Habit {
     frequency,
     createdAt,
     archived: false,
+    position: 0,
   };
 }
 
@@ -113,5 +115,26 @@ describe("racha general", () => {
 
     const missingSunday = getGlobalDays([a, b], { ...completions, b: [] }, MON);
     expect(currentStreak(missingSunday)).toBe(0);
+  });
+});
+
+describe("reorderSubset", () => {
+  it("mueve sólo los elementos del subconjunto, en sus mismos lugares", () => {
+    // b y d se intercambian; a, c y e quedan donde estaban.
+    expect(reorderSubset(["a", "b", "c", "d", "e"], ["d", "b"])).toEqual([
+      "a",
+      "d",
+      "c",
+      "b",
+      "e",
+    ]);
+  });
+
+  it("con la lista completa devuelve el orden nuevo", () => {
+    expect(reorderSubset(["a", "b", "c"], ["c", "a", "b"])).toEqual([
+      "c",
+      "a",
+      "b",
+    ]);
   });
 });

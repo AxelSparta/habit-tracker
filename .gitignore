@@ -43,3 +43,8 @@ next-env.d.ts
 
 # clerk (keys temporales de desarrollo)
 .clerk/
+
+# supabase
+supabase/
+
+/docs/cambios

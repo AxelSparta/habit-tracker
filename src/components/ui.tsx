@@ -27,18 +27,29 @@ export function Loading() {
   );
 }
 
-export function EmptyState({ title, text }: { title: string; text: string }) {
+export function EmptyState({
+  title,
+  text,
+  action,
+}: {
+  title: string;
+  text: string;
+  /** Reemplaza al link a /habitos. */
+  action?: ReactNode;
+}) {
   return (
     <Card className="text-center">
       <p className="text-3xl">🌱</p>
       <h2 className="mt-2 font-semibold">{title}</h2>
       <p className="mt-1 text-sm text-muted">{text}</p>
-      <Link
-        href="/habitos"
-        className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
-      >
-        Crear un hábito
-      </Link>
+      {action ?? (
+        <Link
+          href="/habitos"
+          className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+        >
+          Crear un hábito
+        </Link>
+      )}
     </Card>
   );
 }

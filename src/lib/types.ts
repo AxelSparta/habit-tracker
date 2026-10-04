@@ -14,6 +14,8 @@ export interface Habit {
   /** Fecha de creación en formato YYYY-MM-DD (hora local). */
   createdAt: string;
   archived: boolean;
+  /** Orden manual elegido por el usuario (menor = más arriba). */
+  position: number;
 }
 
 export interface HabitData {

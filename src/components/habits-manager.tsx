@@ -1,10 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { describeFrequency } from "@/lib/habits";
 import { useHabits } from "@/lib/store";
 import type { Habit } from "@/lib/types";
 import { HabitForm } from "./habit-form";
+import { SortableList } from "./sortable-list";
 import { Card, Loading } from "./ui";
 
 export function HabitsManager() {
@@ -49,10 +50,10 @@ export function HabitsManager() {
     }
   }
 
-  function renderHabit(h: Habit) {
+  function renderHabit(h: Habit, handle?: ReactNode) {
     if (editing === h.id) {
       return (
-        <Card key={h.id}>
+        <Card>
           <HabitForm
             initial={h}
             submitLabel="Guardar"
@@ -66,10 +67,10 @@ export function HabitsManager() {
       );
     }
     return (
-      <li
-        key={h.id}
-        className="flex items-center gap-3 rounded-xl border border-border bg-surface p-3"
+      <div
+        className={`flex items-center gap-3 rounded-xl border border-border bg-surface p-3 ${handle ? "pl-1.5" : ""}`}
       >
+        {handle}
         <span className="text-2xl" aria-hidden>
           {h.emoji}
         </span>
@@ -120,7 +121,7 @@ export function HabitsManager() {
             </>
           )}
         </div>
-      </li>
+      </div>
     );
   }
 
@@ -145,7 +146,18 @@ export function HabitsManager() {
         {active.length === 0 ? (
           <p className="text-sm text-muted">Todavía no hay hábitos activos.</p>
         ) : (
-          <ul className="space-y-2">{active.map(renderHabit)}</ul>
+          <SortableList
+            items={active}
+            getLabel={(h) => h.name}
+            // Los archivados se mantienen al final del orden.
+            onReorder={(ids) =>
+              actions.reorderHabits([...ids, ...archived.map((h) => h.id)])
+            }
+            className="space-y-2"
+            renderItem={(h, handle) =>
+              renderHabit(h, editing === h.id ? undefined : handle)
+            }
+          />
         )}
       </section>
 
@@ -154,7 +166,11 @@ export function HabitsManager() {
           <h2 className="mb-2 text-sm font-medium text-muted">
             Archivados ({archived.length})
           </h2>
-          <ul className="space-y-2 opacity-70">{archived.map(renderHabit)}</ul>
+          <ul className="space-y-2 opacity-70">
+            {archived.map((h) => (
+              <li key={h.id}>{renderHabit(h)}</li>
+            ))}
+          </ul>
         </section>
       )}
 

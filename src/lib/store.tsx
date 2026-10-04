@@ -28,6 +28,7 @@ interface HabitRow {
   frequency: Frequency;
   created_on: string;
   archived: boolean;
+  position: number;
 }
 
 interface CompletionRow {
@@ -45,6 +46,7 @@ function toHabit(row: HabitRow): Habit {
     frequency: row.frequency,
     createdAt: row.created_on,
     archived: row.archived,
+    position: row.position,
   };
 }
 
@@ -56,13 +58,15 @@ function toRow(habit: Habit): HabitRow {
     frequency: habit.frequency,
     created_on: habit.createdAt,
     archived: habit.archived,
+    position: habit.position,
   };
 }
 
 async function fetchAll(supabase: SupabaseClient): Promise<HabitData> {
   const { data: habits, error } = await supabase
     .from("habits")
-    .select("id, name, emoji, frequency, created_on, archived")
+    .select("id, name, emoji, frequency, created_on, archived, position")
+    .order("position")
     .order("inserted_at");
   if (error) throw error;
 
@@ -87,20 +91,32 @@ async function fetchAll(supabase: SupabaseClient): Promise<HabitData> {
   };
 }
 
-function parseBackup(raw: string): HabitData {
+function parseBackup(raw: string, current: Habit[]): HabitData {
   const data = JSON.parse(raw) as Partial<HabitData>;
   if (!Array.isArray(data.habits) || typeof data.completions !== "object") {
     throw new Error("Formato de datos inválido");
   }
+  // Los hábitos que ya existen conservan su lugar; los nuevos van al final,
+  // en el orden del respaldo (los respaldos viejos no tienen `position`).
+  const existing = new Map(current.map((h) => [h.id, h.position]));
+  let next = nextPosition(current);
   return {
     version: 1,
-    habits: data.habits,
+    habits: data.habits.map((h) => ({
+      ...h,
+      position: existing.get(h.id) ?? next++,
+    })),
     completions: data.completions ?? {},
   };
 }
 
+function nextPosition(habits: Habit[]): number {
+  return habits.reduce((max, h) => Math.max(max, h.position + 1), 0);
+}
+
 function createActions(
   supabase: SupabaseClient,
+  data: HabitData | null,
   setData: (updater: (prev: HabitData) => HabitData) => void,
   run: (op: () => PromiseLike<{ error: unknown }>) => Promise<void>,
   reload: () => Promise<void>,
@@ -112,6 +128,7 @@ function createActions(
         ...input,
         createdAt: todayKey(),
         archived: false,
+        position: nextPosition(data?.habits ?? []),
       };
       setData((d) => ({ ...d, habits: [...d.habits, habit] }));
       return run(() => supabase.from("habits").insert(toRow(habit)));
@@ -141,6 +158,34 @@ function createActions(
       return run(() => supabase.from("habits").delete().eq("id", id));
     },
 
+    /** `ids`: todos los hábitos (también archivados) en el nuevo orden. */
+    reorderHabits(ids: string[]) {
+      const before = new Map(
+        (data?.habits ?? []).map((h) => [h.id, h.position]),
+      );
+      const changed = ids.filter((id, i) => before.get(id) !== i);
+      if (changed.length === 0) return Promise.resolve();
+      const order = new Map(ids.map((id, i) => [id, i]));
+      setData((d) => ({
+        ...d,
+        habits: d.habits
+          .map((h) => ({ ...h, position: order.get(h.id) ?? h.position }))
+          .sort((a, b) => a.position - b.position),
+      }));
+      // Sólo se actualizan las filas que cambiaron de lugar.
+      return run(async () => {
+        const results = await Promise.all(
+          changed.map((id) =>
+            supabase
+              .from("habits")
+              .update({ position: order.get(id) })
+              .eq("id", id),
+          ),
+        );
+        return { error: results.find((r) => r.error)?.error ?? null };
+      });
+    },
+
     /** `wasDone`: si el día ya estaba marcado (lo que muestra la UI). */
     toggleCompletion(id: string, day: string, wasDone: boolean) {
       setData((d) => {
@@ -159,7 +204,7 @@ function createActions(
 
     /** Agrega (o actualiza) los hábitos y completados de un respaldo JSON. */
     async importJSON(raw: string) {
-      const backup = parseBackup(raw);
+      const backup = parseBackup(raw, data?.habits ?? []);
       const { error } = await supabase
         .from("habits")
         .upsert(backup.habits.map(toRow));
@@ -228,6 +273,7 @@ export function HabitStoreProvider({ children }: { children: ReactNode }) {
     () =>
       createActions(
         supabase,
+        data,
         (updater) =>
           setLoaded((prev) =>
             prev ? { ...prev, data: updater(prev.data) } : prev,
@@ -242,7 +288,7 @@ export function HabitStoreProvider({ children }: { children: ReactNode }) {
         },
         reload,
       ),
-    [supabase, reload],
+    [supabase, data, reload],
   );
 
   const value = useMemo(

@@ -1,11 +1,8 @@
-import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkMiddleware } from "@clerk/nextjs/server";
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
-
-// Todas las rutas requieren sesión, salvo las de inicio de sesión / registro.
-export default clerkMiddleware(async (auth, req) => {
-  if (!isPublicRoute(req)) await auth.protect();
-});
+// Sólo deja disponible la sesión de Clerk para `auth()`; cada página hace su
+// propio chequeo con `auth.protect()` (y los datos los protege RLS en Supabase).
+export default clerkMiddleware();
 
 export const config = {
   matcher: [

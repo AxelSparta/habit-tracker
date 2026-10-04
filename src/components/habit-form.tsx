@@ -5,20 +5,111 @@ import { WEEKDAY_NAMES, WEEKDAY_SHORT } from "@/lib/dates";
 import type { HabitInput } from "@/lib/store";
 import type { Frequency, Weekday } from "@/lib/types";
 
-const EMOJIS = [
-  "💪",
-  "📚",
-  "🧘",
-  "🏃",
-  "💧",
-  "🥗",
-  "😴",
-  "✍️",
-  "🎸",
-  "🧹",
-  "💊",
-  "🌱",
+const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
+  {
+    label: "Ejercicio",
+    emojis: [
+      "💪",
+      "🏃",
+      "🚶",
+      "🚴",
+      "🏊",
+      "🏋️",
+      "🤸",
+      "🧗",
+      "⚽",
+      "🎾",
+      "🥾",
+      "🧘",
+    ],
+  },
+  {
+    label: "Alimentación y salud",
+    emojis: [
+      "💧",
+      "🥗",
+      "🍎",
+      "🥦",
+      "🍳",
+      "🥛",
+      "🍵",
+      "☕",
+      "🚭",
+      "💊",
+      "🦷",
+      "🩺",
+    ],
+  },
+  {
+    label: "Descanso y bienestar",
+    emojis: [
+      "😴",
+      "🛏️",
+      "🚿",
+      "🧴",
+      "🌞",
+      "🌙",
+      "🙏",
+      "😊",
+      "❤️",
+      "🛀",
+      "📵",
+      "🌳",
+    ],
+  },
+  {
+    label: "Mente y estudio",
+    emojis: [
+      "📚",
+      "✍️",
+      "📝",
+      "🧠",
+      "🎓",
+      "💻",
+      "🗣️",
+      "🌍",
+      "🧩",
+      "🎯",
+      "📰",
+      "⏰",
+    ],
+  },
+  {
+    label: "Hogar y finanzas",
+    emojis: [
+      "🧹",
+      "🧺",
+      "🍽️",
+      "🌱",
+      "🐶",
+      "🐱",
+      "💰",
+      "🛒",
+      "📅",
+      "♻️",
+      "🔧",
+      "📦",
+    ],
+  },
+  {
+    label: "Hobbies y vínculos",
+    emojis: [
+      "🎸",
+      "🎹",
+      "🎨",
+      "📷",
+      "🎬",
+      "🎮",
+      "🧶",
+      "📞",
+      "🤝",
+      "💌",
+      "✈️",
+      "⭐",
+    ],
+  },
 ];
+const DEFAULT_EMOJI = EMOJI_GROUPS[0].emojis[0];
 const ALL_DAYS: Weekday[] = [0, 1, 2, 3, 4, 5, 6];
 
 type Mode = Frequency["type"];
@@ -28,14 +119,16 @@ export function HabitForm({
   submitLabel,
   onSubmit,
   onCancel,
+  autoFocus = false,
 }: {
   initial?: HabitInput;
   submitLabel: string;
   onSubmit: (input: HabitInput) => void;
   onCancel?: () => void;
+  autoFocus?: boolean;
 }) {
   const [name, setName] = useState(initial?.name ?? "");
-  const [emoji, setEmoji] = useState(initial?.emoji ?? EMOJIS[0]);
+  const [emoji, setEmoji] = useState(initial?.emoji ?? DEFAULT_EMOJI);
   const [mode, setMode] = useState<Mode>(initial?.frequency.type ?? "daily");
   const [days, setDays] = useState<Weekday[]>(
     initial?.frequency.type === "weekdays" ? initial.frequency.days : [0, 2, 4],
@@ -76,28 +169,41 @@ export function HabitForm({
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Ej: Leer 20 minutos"
+          autoFocus={autoFocus}
           maxLength={60}
           className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-accent"
         />
       </div>
 
       <fieldset>
-        <legend className="mb-1 text-sm font-medium">Ícono</legend>
-        <div className="flex flex-wrap gap-1.5">
-          {EMOJIS.map((e) => (
-            <button
-              type="button"
-              key={e}
-              onClick={() => setEmoji(e)}
-              aria-pressed={emoji === e}
-              className={`size-10 rounded-lg border text-xl ${
-                emoji === e
-                  ? "border-accent bg-accent-soft/40"
-                  : "border-border"
-              }`}
-            >
-              {e}
-            </button>
+        <legend className="mb-1 text-sm font-medium">
+          Ícono{" "}
+          <span className="ml-1 text-xl" aria-hidden>
+            {emoji}
+          </span>
+        </legend>
+        <div className="max-h-64 space-y-3 overflow-y-auto rounded-lg border border-border p-2">
+          {EMOJI_GROUPS.map((group) => (
+            <div key={group.label}>
+              <p className="mb-1 text-xs text-muted">{group.label}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {group.emojis.map((e) => (
+                  <button
+                    type="button"
+                    key={e}
+                    onClick={() => setEmoji(e)}
+                    aria-pressed={emoji === e}
+                    className={`size-10 rounded-lg border text-xl ${
+                      emoji === e
+                        ? "border-accent bg-accent-soft/40"
+                        : "border-transparent hover:bg-surface-2"
+                    }`}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </fieldset>
