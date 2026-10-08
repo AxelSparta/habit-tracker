@@ -36,7 +36,7 @@ Next.js 16 (App Router), React 19, TypeScript y Tailwind CSS 4.
    `0002_habit_position.sql`, …) o `supabase db push` si usás la CLI de
    Supabase.
 5. **Variables de entorno**: copiá `.env.example` a `.env.local` y completalo.
-6. `npm run dev`.
+6. `pnpm install` y `pnpm dev`.
 
 Si en el navegador quedaron datos de la versión anterior (sin cuenta), la app
 ofrece importarlos a tu cuenta al iniciar sesión.
@@ -44,13 +44,14 @@ ofrece importarlos a tu cuenta al iniciar sesión.
 ## Scripts
 
 ```bash
-npm run dev        # servidor de desarrollo en http://localhost:3000
-npm run build      # build de producción
-npm start          # servir el build
-npm test           # tests (Vitest)
-npm run lint       # ESLint
-npm run typecheck  # tsc --noEmit
-npm run format     # Prettier
+pnpm dev           # servidor de desarrollo en http://localhost:3000
+pnpm build         # build de producción
+pnpm start         # servir el build
+pnpm test          # tests (Vitest)
+pnpm lint          # ESLint
+pnpm typecheck     # tsc --noEmit
+pnpm format        # Prettier
+pnpm format:check  # Prettier sin escribir (lo corre el CI)
 ```
 
 ## Estructura
@@ -67,7 +68,7 @@ src/
     dates.ts           helpers de fechas (claves YYYY-MM-DD, semana lunes–domingo)
     habits.ts          lógica de rachas y estadísticas (con tests)
     supabase.ts        cliente de Supabase con el token de Clerk
-    store.tsx          HabitStoreProvider + hook useHabits (carga y escritura
-                       optimista en Supabase)
+    habit-actions.ts   lectura y escrituras optimistas en Supabase (con tests)
+    store.tsx          HabitStoreProvider + hook useHabits
 supabase/migrations/   esquema SQL y políticas RLS
 ```
