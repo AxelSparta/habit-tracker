@@ -49,7 +49,7 @@ pnpm build         # build de producción
 pnpm start         # servir el build
 pnpm test          # tests (Vitest)
 pnpm lint          # ESLint
-pnpm typecheck     # tsc --noEmit
+pnpm typecheck     # next typegen + tsc --noEmit
 pnpm format        # Prettier
 pnpm format:check  # Prettier sin escribir (lo corre el CI)
 ```
