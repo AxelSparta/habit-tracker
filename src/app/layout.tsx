@@ -1,7 +1,8 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { esUY } from "@clerk/localizations";
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ServiceWorker } from "@/components/service-worker";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,6 +41,17 @@ export const metadata: Metadata = {
   title: "Hábitos",
   description:
     "Registrá tus hábitos, mantené la racha y mirá tus estadísticas.",
+  // iOS no lee el manifest para esto: abre la app instalada sin la barra de
+  // Safari y usa este nombre debajo del ícono.
+  appleWebApp: { capable: true, title: "Hábitos", statusBarStyle: "default" },
+};
+
+// Color de la barra del sistema, igual al fondo de cada modo (globals.css).
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f6f4" },
+    { media: "(prefers-color-scheme: dark)", color: "#121211" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -52,6 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ClerkProvider localization={esUY} appearance={clerkAppearance}>
           {children}
         </ClerkProvider>
+        <ServiceWorker />
       </body>
     </html>
   );

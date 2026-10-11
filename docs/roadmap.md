@@ -104,12 +104,14 @@ racha sólo cuenta los días con 8 o más.
 Ver `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/01-metadata/manifest.md`
 antes de empezar.
 
-- [ ] `src/app/manifest.ts` con nombre, colores del tema, `display:
+- [x] `src/app/manifest.ts` con nombre, colores del tema, `display:
 "standalone"` e íconos 192/512 (y maskable) en `public/`.
-- [ ] Service worker (`public/sw.js`) registrado desde un componente cliente:
-      cache del shell de la app para que abra sin conexión. Los datos siguen
-      viniendo de Supabase.
-- [ ] Revisar que Clerk y `proxy.ts` no bloqueen `manifest.webmanifest`,
+- [x] Service worker (`public/sw.js`) registrado desde un componente cliente.
+      En vez de cachear el shell, cachea los estáticos de `/_next/static/` y
+      muestra `public/offline.html` sin conexión: las páginas dependen de la
+      sesión de Clerk y los datos de Supabase, así que offline no hay nada
+      útil que mostrar.
+- [x] Revisar que Clerk y `proxy.ts` no bloqueen `manifest.webmanifest`,
       `sw.js` ni los íconos.
 - [ ] Probar instalación en Android (Chrome) e iOS (Safari → "Agregar a
       inicio").
