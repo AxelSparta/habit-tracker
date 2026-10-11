@@ -3,12 +3,15 @@
 import { useMemo, useState } from "react";
 import { addDays, startOfWeek, todayKey } from "@/lib/dates";
 import {
+  averageValue,
   bestStreak,
   completionRate,
   countInWindow,
   currentStreak,
   describeFrequency,
+  describeTarget,
   doneDays,
+  formatAmount,
   getGlobalDays,
   getPeriods,
   streakUnit,
@@ -41,6 +44,15 @@ export function StatsView() {
         periods,
         done,
         total: done.size,
+        average:
+          habit.target != null
+            ? averageValue(
+                habit,
+                data.completions[habit.id],
+                today,
+                WINDOW_DAYS,
+              )
+            : null,
       };
     });
 
@@ -174,31 +186,39 @@ export function StatsView() {
             </tr>
           </thead>
           <tbody>
-            {stats.perHabit.map(({ habit, current, best, rate, total }) => (
-              <tr key={habit.id} className="border-t border-border">
-                <td className="py-2.5 pr-3">
-                  <span className="mr-2" aria-hidden>
-                    {habit.emoji}
-                  </span>
-                  <span className="font-medium">{habit.name}</span>
-                  <span className="block pl-7 text-xs text-muted">
-                    {describeFrequency(habit.frequency)}
-                  </span>
-                </td>
-                <td className="py-2.5 pr-3">
-                  <StreakBadge value={current} unit={streakUnit(habit)} />
-                </td>
-                <td className="hidden py-2.5 pr-3 tabular-nums sm:table-cell">
-                  {best} {streakUnit(habit)}
-                </td>
-                <td className="py-2.5 pr-3">
-                  <Meter value={rate} />
-                </td>
-                <td className="hidden py-2.5 text-right tabular-nums sm:table-cell">
-                  {total}
-                </td>
-              </tr>
-            ))}
+            {stats.perHabit.map(
+              ({ habit, current, best, rate, total, average }) => (
+                <tr key={habit.id} className="border-t border-border">
+                  <td className="py-2.5 pr-3">
+                    <span className="mr-2" aria-hidden>
+                      {habit.emoji}
+                    </span>
+                    <span className="font-medium">{habit.name}</span>
+                    <span className="block pl-7 text-xs text-muted">
+                      {describeFrequency(habit.frequency)}
+                    </span>
+                    {habit.target != null && (
+                      <span className="block pl-7 text-xs text-muted">
+                        Meta {describeTarget(habit)} · prom.{" "}
+                        {average === null ? "—" : formatAmount(average)}/día
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <StreakBadge value={current} unit={streakUnit(habit)} />
+                  </td>
+                  <td className="hidden py-2.5 pr-3 tabular-nums sm:table-cell">
+                    {best} {streakUnit(habit)}
+                  </td>
+                  <td className="py-2.5 pr-3">
+                    <Meter value={rate} />
+                  </td>
+                  <td className="hidden py-2.5 text-right tabular-nums sm:table-cell">
+                    {total}
+                  </td>
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </Card>

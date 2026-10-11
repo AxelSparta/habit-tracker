@@ -20,6 +20,7 @@ import type { Habit } from "@/lib/types";
 import { HabitForm } from "./habit-form";
 import { SortableList } from "./sortable-list";
 import { Card, EmptyState, Loading, StreakBadge } from "./ui";
+import { TargetProgress, ValueStepper } from "./value-stepper";
 
 export function TodayView() {
   const { data, actions } = useHabits();
@@ -155,6 +156,7 @@ export function TodayView() {
               day={day}
               today={today}
               done={doneDays(h, data.completions[h.id])}
+              value={data.completions[h.id]?.[day]?.value ?? 0}
               handle={handle}
             />
           )}
@@ -189,6 +191,7 @@ export function TodayView() {
                 day={day}
                 today={today}
                 done={doneDays(h, data.completions[h.id])}
+                value={data.completions[h.id]?.[day]?.value ?? 0}
                 handle={handle}
                 disabled
               />
@@ -212,6 +215,7 @@ function HabitRow({
   day,
   today,
   done,
+  value,
   handle,
   disabled = false,
 }: {
@@ -221,49 +225,73 @@ function HabitRow({
   today: string;
   /** Fechas en que el hábito quedó completado. */
   done: Set<string>;
+  /** Cantidad registrada ese día (hábitos medibles). */
+  value: number;
   /** Manija para reordenar arrastrando. */
   handle: ReactNode;
   disabled?: boolean;
 }) {
   const checked = done.has(day);
   const streak = currentStreak(getPeriods(habit, done, today));
+  const measurable = habit.target != null;
+
+  const content = (
+    <>
+      <span className="text-2xl" aria-hidden>
+        {habit.emoji}
+      </span>
+      <span className="min-w-0 flex-1 basis-32">
+        <span className="block truncate font-medium">{habit.name}</span>
+        <span className="block text-xs text-muted">
+          {describeFrequency(habit.frequency)}
+          {habit.frequency.type === "timesPerWeek" &&
+            ` · ${weekCount(done, day)}/${habit.frequency.count} ${startOfWeek(day) === startOfWeek(today) ? "esta semana" : "esa semana"}`}
+        </span>
+        {measurable && <TargetProgress habit={habit} value={value} />}
+      </span>
+      <StreakBadge value={streak} unit={streakUnit(habit)} />
+    </>
+  );
 
   return (
     <div
       className={`flex items-stretch rounded-xl border pl-1.5 transition-colors ${
         checked
           ? "border-accent bg-accent-soft/40"
-          : "border-border bg-surface has-[button:enabled:hover]:bg-surface-2"
+          : measurable
+            ? "border-border bg-surface"
+            : "border-border bg-surface has-[button:enabled:hover]:bg-surface-2"
       }`}
     >
       {handle}
-      <button
-        onClick={() => actions.toggleCompletion(habit.id, day, checked)}
-        disabled={disabled}
-        aria-pressed={checked}
-        className="flex min-w-0 flex-1 items-center gap-3 rounded-r-xl py-3 pr-3 pl-1.5 text-left disabled:cursor-not-allowed sm:py-4 sm:pr-4"
-      >
-        <span className="text-2xl" aria-hidden>
-          {habit.emoji}
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-medium">{habit.name}</span>
-          <span className="block text-xs text-muted">
-            {describeFrequency(habit.frequency)}
-            {habit.frequency.type === "timesPerWeek" &&
-              ` · ${weekCount(done, day)}/${habit.frequency.count} ${startOfWeek(day) === startOfWeek(today) ? "esta semana" : "esa semana"}`}
-          </span>
-        </span>
-        <StreakBadge value={streak} unit={streakUnit(habit)} />
-        <span
-          aria-hidden
-          className={`flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
-            checked ? "border-accent bg-accent text-white" : "border-border"
-          }`}
+      {measurable ? (
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2 py-3 pr-3 pl-1.5 sm:py-4 sm:pr-4">
+          {content}
+          <ValueStepper
+            habit={habit}
+            value={value}
+            disabled={disabled}
+            onChange={(n) => actions.setValue(habit.id, day, n)}
+          />
+        </div>
+      ) : (
+        <button
+          onClick={() => actions.toggleCompletion(habit.id, day, checked)}
+          disabled={disabled}
+          aria-pressed={checked}
+          className="flex min-w-0 flex-1 items-center gap-3 rounded-r-xl py-3 pr-3 pl-1.5 text-left disabled:cursor-not-allowed sm:py-4 sm:pr-4"
         >
-          {checked && "✓"}
-        </span>
-      </button>
+          {content}
+          <span
+            aria-hidden
+            className={`flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
+              checked ? "border-accent bg-accent text-white" : "border-border"
+            }`}
+          >
+            {checked && "✓"}
+          </span>
+        </button>
+      )}
     </div>
   );
 }

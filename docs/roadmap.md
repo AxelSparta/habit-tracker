@@ -77,10 +77,10 @@ deploy.
 
 ## Fase 3 — Hábitos medibles
 
-- [ ] `habit-form.tsx`: opción "Medible" con meta numérica y unidad.
-- [ ] `today-view.tsx`: en vez del check, un contador (− / +) o input numérico
+- [x] `habit-form.tsx`: opción "Medible" con meta numérica y unidad.
+- [x] `today-view.tsx`: en vez del check, un contador (− / +) o input numérico
       con progreso `3 / 8 vasos`; se marca completo al llegar a la meta.
-- [ ] Estadísticas: para medibles, mostrar promedio diario y % de días que
+- [x] Estadísticas: para medibles, mostrar promedio diario y % de días que
       alcanzaron la meta.
 
 **Terminado cuando:** un hábito "8 vasos de agua" se puede cargar de a uno y la

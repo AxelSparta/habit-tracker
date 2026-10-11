@@ -9,7 +9,7 @@ import {
   parseBackup,
   type Run,
 } from "./habit-actions";
-import type { Habit, HabitData } from "./types";
+import type { Completions, Habit, HabitData } from "./types";
 
 /** Una request armada con el query builder, tal como llegaría a PostgREST. */
 interface Call {
@@ -100,7 +100,7 @@ function setup(initial: HabitData, respond?: Responder) {
   return { actions, state, calls, onError, reload };
 }
 
-const data = (habits: Habit[], completions = {}): HabitData => ({
+const data = (habits: Habit[], completions: Completions = {}): HabitData => ({
   version: 2,
   habits,
   completions,
@@ -180,6 +180,59 @@ describe("toggleCompletion", () => {
   });
 });
 
+describe("setValue", () => {
+  const water = { ...habit("a", 0), target: 8 };
+
+  it("guarda la cantidad con un upsert y conserva la nota local", async () => {
+    const { actions, state, calls } = setup(
+      data([water], { a: { "2026-10-01": { value: 2, note: "uf" } } }),
+    );
+    await actions.setValue("a", "2026-10-01", 3);
+    expect(state.data.completions.a["2026-10-01"]).toEqual({
+      value: 3,
+      note: "uf",
+    });
+    expect(calls).toEqual([
+      {
+        table: "completions",
+        op: "upsert",
+        payload: { habit_id: "a", day: "2026-10-01", value: 3 },
+        filters: [],
+      },
+    ]);
+  });
+
+  it("en 0 borra el registro si no tiene nota", async () => {
+    const { actions, state, calls } = setup(
+      data([water], { a: { "2026-10-01": { value: 1 } } }),
+    );
+    await actions.setValue("a", "2026-10-01", 0);
+    expect(state.data.completions.a).toEqual({});
+    expect(calls[0].op).toBe("delete");
+  });
+
+  it("en 0 conserva el registro si tiene nota", async () => {
+    const { actions, state, calls } = setup(
+      data([water], { a: { "2026-10-01": { value: 1, note: "uf" } } }),
+    );
+    await actions.setValue("a", "2026-10-01", 0);
+    expect(state.data.completions.a["2026-10-01"]).toEqual({
+      value: 0,
+      note: "uf",
+    });
+    expect(calls[0].op).toBe("upsert");
+  });
+
+  it("no baja de 0 ni acepta fechas futuras", async () => {
+    const { actions, state, calls } = setup(data([water]));
+    await actions.setValue("a", "2999-01-01", 3);
+    expect(calls).toEqual([]);
+    await actions.setValue("a", "2026-10-01", -2);
+    expect(state.data.completions.a).toEqual({});
+    expect(calls[0].op).toBe("delete");
+  });
+});
+
 describe("reorderHabits", () => {
   const habits = [habit("a", 0), habit("b", 1), habit("c", 2)];
 
@@ -242,13 +295,28 @@ describe("addHabit, updateHabit y deleteHabit", () => {
     expect(calls[0].payload).toEqual({ name: "X", created_on: "2026-01-01" });
   });
 
+  it("para quitar la meta manda null a la base", async () => {
+    const { actions, state, calls } = setup(
+      data([{ ...habit("a", 0), target: 8, unit: "vasos" }]),
+    );
+    await actions.updateHabit("a", { target: undefined, unit: undefined });
+    expect(calls[0].payload).toEqual({ target: null, unit: null });
+    expect(state.data.habits[0].target).toBeUndefined();
+  });
+
+  it("no toca la meta si no viene en el cambio", async () => {
+    const { actions, calls } = setup(data([habit("a", 0)]));
+    await actions.updateHabit("a", { archived: true });
+    expect(calls[0].payload).toEqual({ archived: true });
+  });
+
   it("al borrar un hábito también quita sus completados", async () => {
     const { actions, state } = setup(
-      data([habit("a", 0), habit("b", 1)], { a: ["2026-10-01"], b: [] }),
+      data([habit("a", 0), habit("b", 1)], { a: { "2026-10-01": {} }, b: {} }),
     );
     await actions.deleteHabit("a");
     expect(state.data.habits.map((h) => h.id)).toEqual(["b"]);
-    expect(state.data.completions).toEqual({ b: [] });
+    expect(state.data.completions).toEqual({ b: {} });
   });
 });
 

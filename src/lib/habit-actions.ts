@@ -11,6 +11,9 @@ export interface HabitInput {
   name: string;
   emoji: string;
   frequency: Frequency;
+  /** Meta diaria; `undefined` = hábito sí/no. */
+  target?: number;
+  unit?: string;
 }
 
 interface HabitRow {
@@ -187,8 +190,14 @@ export function createActions(
         ...d,
         habits: d.habits.map((h) => (h.id === id ? { ...h, ...patch } : h)),
       }));
-      const { createdAt, ...rest } = patch;
-      const row = createdAt ? { ...rest, created_on: createdAt } : rest;
+      const { createdAt, target, unit, ...rest } = patch;
+      // `undefined` no viaja en el JSON: para quitar la meta hay que mandar null.
+      const row = {
+        ...rest,
+        ...(createdAt && { created_on: createdAt }),
+        ...("target" in patch && { target: target ?? null }),
+        ...("unit" in patch && { unit: unit ?? null }),
+      };
       return run(() => supabase.from("habits").update(row).eq("id", id));
     },
 
@@ -247,6 +256,31 @@ export function createActions(
         wasDone
           ? supabase.from("completions").delete().match({ habit_id: id, day })
           : supabase.from("completions").insert({ habit_id: id, day }),
+      );
+    },
+
+    /**
+     * Guarda la cantidad hecha de un hábito medible en `day`. En 0 se borra
+     * el registro, salvo que tenga nota: ahí queda con `value = 0`.
+     */
+    setValue(id: string, day: string, value: number) {
+      if (day > todayKey()) return Promise.resolve();
+      const amount = Math.max(0, value);
+      const entry = data?.completions[id]?.[day];
+      const remove = amount === 0 && !entry?.note;
+      setData((d) => {
+        const next = { ...d.completions[id] };
+        if (remove) delete next[day];
+        else next[day] = { ...next[day], value: amount };
+        return { ...d, completions: { ...d.completions, [id]: next } };
+      });
+      return run(() =>
+        remove
+          ? supabase.from("completions").delete().match({ habit_id: id, day })
+          : // Upsert sólo con `value`: si ya había nota, se conserva.
+            supabase
+              .from("completions")
+              .upsert({ habit_id: id, day, value: amount }),
       );
     },
 

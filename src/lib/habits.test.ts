@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   appliesOn,
+  averageValue,
+  describeTarget,
   bestStreak,
   completionRate,
   currentStreak,
@@ -215,5 +217,38 @@ describe("rachas de hábitos medibles", () => {
     const periods = getPeriods(water, done, MON);
     expect(currentStreak(periods)).toBe(1);
     expect(bestStreak(periods)).toBe(2);
+  });
+});
+
+describe("hábitos medibles: meta y promedio", () => {
+  const water = {
+    ...habit({ type: "daily" }, "2026-09-25"),
+    target: 8,
+    unit: "vasos",
+  };
+
+  it("describe la meta con su unidad", () => {
+    expect(describeTarget(water)).toBe("8 vasos");
+    expect(describeTarget({ ...water, target: 2.5, unit: undefined })).toBe(
+      "2,5",
+    );
+    expect(describeTarget(habit({ type: "daily" }))).toBeNull();
+  });
+
+  it("promedia los días que aplicaba; hoy sólo si tiene registro", () => {
+    const entries = {
+      "2026-09-25": { value: 8 },
+      "2026-09-26": { value: 4 },
+      // 27: sin registro, cuenta como 0.
+    };
+    // 25, 26, 27 (antes del 25 no existía; hoy sin registro no cuenta).
+    expect(averageValue(water, entries, MON, 30)).toBe(4);
+    const withToday = { ...entries, [MON]: { value: 8 } };
+    expect(averageValue(water, withToday, MON, 30)).toBe(5);
+  });
+
+  it("es null si no hay días para promediar", () => {
+    const fresh = { ...water, createdAt: MON };
+    expect(averageValue(fresh, {}, MON, 30)).toBeNull();
   });
 });

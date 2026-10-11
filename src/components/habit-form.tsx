@@ -137,7 +137,15 @@ export function HabitForm({
     initial?.frequency.type === "timesPerWeek" ? initial.frequency.count : 3,
   );
 
-  const valid = name.trim() !== "" && (mode !== "weekdays" || days.length > 0);
+  const [measurable, setMeasurable] = useState(initial?.target != null);
+  const [target, setTarget] = useState(String(initial?.target ?? 8));
+  const [unit, setUnit] = useState(initial?.unit ?? "");
+  const targetValue = Number(target);
+
+  const valid =
+    name.trim() !== "" &&
+    (mode !== "weekdays" || days.length > 0) &&
+    (!measurable || (Number.isFinite(targetValue) && targetValue > 0));
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -148,7 +156,15 @@ export function HabitForm({
         : mode === "weekdays"
           ? { type: "weekdays", days: [...days].sort() }
           : { type: "timesPerWeek", count };
-    onSubmit({ name: name.trim(), emoji, frequency });
+    // `target` y `unit` van siempre, aunque sea `undefined`, para que al
+    // editar se pueda quitar la meta.
+    onSubmit({
+      name: name.trim(),
+      emoji,
+      frequency,
+      target: measurable ? targetValue : undefined,
+      unit: measurable ? unit.trim() || undefined : undefined,
+    });
     if (!initial) setName("");
   }
 
@@ -274,6 +290,78 @@ export function HabitForm({
             <span className="w-28 tabular-nums">
               {count} {count === 1 ? "vez" : "veces"} / semana
             </span>
+          </div>
+        )}
+      </fieldset>
+
+      <fieldset>
+        <legend className="mb-1 text-sm font-medium">Registro</legend>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {(
+            [
+              [false, "Sí / no", "Lo hice o no lo hice"],
+              [true, "Medible", "Con una meta, ej. 8 vasos"],
+            ] as const
+          ).map(([value, label, hint]) => (
+            <label
+              key={label}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+                measurable === value
+                  ? "border-accent bg-accent-soft/40"
+                  : "border-border"
+              }`}
+            >
+              <input
+                type="radio"
+                name="kind"
+                checked={measurable === value}
+                onChange={() => setMeasurable(value)}
+                className="accent-accent"
+              />
+              <span>
+                {label}
+                <span className="block text-xs text-muted">{hint}</span>
+              </span>
+            </label>
+          ))}
+        </div>
+
+        {measurable && (
+          <div className="mt-3 flex gap-2">
+            <div className="w-28">
+              <label
+                htmlFor="habit-target"
+                className="mb-1 block text-xs text-muted"
+              >
+                Meta por día
+              </label>
+              <input
+                id="habit-target"
+                type="number"
+                inputMode="decimal"
+                min={0.1}
+                step="any"
+                value={target}
+                onChange={(e) => setTarget(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 tabular-nums outline-none focus:border-accent"
+              />
+            </div>
+            <div className="flex-1">
+              <label
+                htmlFor="habit-unit"
+                className="mb-1 block text-xs text-muted"
+              >
+                Unidad (opcional)
+              </label>
+              <input
+                id="habit-unit"
+                value={unit}
+                onChange={(e) => setUnit(e.target.value)}
+                placeholder="Ej: vasos, min, páginas"
+                maxLength={20}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+              />
+            </div>
           </div>
         )}
       </fieldset>

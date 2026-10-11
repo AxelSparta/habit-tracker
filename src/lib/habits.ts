@@ -209,6 +209,39 @@ export function getGlobalDays(
   return result;
 }
 
+/** Número con hasta un decimal, en formato local (ej. "2,5"). */
+export function formatAmount(n: number): string {
+  return n.toLocaleString("es-AR", { maximumFractionDigits: 1 });
+}
+
+/** Meta de un hábito medible, ej. "8 vasos"; `null` en hábitos sí/no. */
+export function describeTarget(habit: Habit): string | null {
+  if (habit.target == null) return null;
+  return [formatAmount(habit.target), habit.unit].filter(Boolean).join(" ");
+}
+
+/**
+ * Promedio diario de un hábito medible en los últimos `days` días, contando
+ * los días en que aplicaba (sin registro = 0). Hoy sólo cuenta si ya tiene
+ * registro, para no bajar el promedio con un día que todavía no terminó.
+ */
+export function averageValue(
+  habit: Habit,
+  entries: Record<string, Entry> | undefined,
+  today: string,
+  days: number,
+): number | null {
+  let sum = 0;
+  let count = 0;
+  for (const day of dayRange(addDays(today, -(days - 1)), today)) {
+    const entry = entries?.[day];
+    if (!appliesOn(habit, day) || (day === today && !entry)) continue;
+    sum += entry?.value ?? 0;
+    count++;
+  }
+  return count === 0 ? null : sum / count;
+}
+
 export function describeFrequency(frequency: Frequency): string {
   switch (frequency.type) {
     case "daily":

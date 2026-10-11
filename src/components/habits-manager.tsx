@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { describeFrequency } from "@/lib/habits";
+import { describeFrequency, describeTarget } from "@/lib/habits";
 import { useHabits } from "@/lib/store";
 import type { Habit } from "@/lib/types";
 import { HabitForm } from "./habit-form";
@@ -76,7 +76,10 @@ export function HabitsManager() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{h.name}</p>
-          <p className="text-xs text-muted">{describeFrequency(h.frequency)}</p>
+          <p className="text-xs text-muted">
+            {describeFrequency(h.frequency)}
+            {h.target != null && ` · Meta: ${describeTarget(h)}`}
+          </p>
         </div>
         <div className="flex gap-1 text-sm">
           {confirmDelete === h.id ? (
