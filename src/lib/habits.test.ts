@@ -237,21 +237,21 @@ describe("hábitos medibles: meta y promedio", () => {
     expect(describeTarget(habit({ type: "daily" }))).toBeNull();
   });
 
-  it("promedia los días que aplicaba; hoy sólo si tiene registro", () => {
+  it("promedia sólo los días con cantidad registrada", () => {
     const entries = {
+      "2026-08-01": { value: 100 }, // fuera de la ventana de 30 días
       "2026-09-25": { value: 8 },
       "2026-09-26": { value: 4 },
-      // 27: sin registro, cuenta como 0.
+      // 27: sin registro, no cuenta.
+      "2026-09-27": { value: 0, note: "sólo nota" },
+      [MON]: { value: 6 },
     };
-    // 25, 26, 27 (antes del 25 no existía; hoy sin registro no cuenta).
-    expect(averageValue(water, entries, MON, 30)).toBe(4);
-    const withToday = { ...entries, [MON]: { value: 8 } };
-    expect(averageValue(water, withToday, MON, 30)).toBe(5);
+    expect(averageValue(entries, MON, 30)).toBe(6);
   });
 
-  it("es null si no hay días para promediar", () => {
-    const fresh = { ...water, createdAt: MON };
-    expect(averageValue(fresh, {}, MON, 30)).toBeNull();
+  it("es null si no hay días con cantidad", () => {
+    expect(averageValue({}, MON, 30)).toBeNull();
+    expect(averageValue({ [MON]: { note: "nada" } }, MON, 30)).toBeNull();
   });
 });
 

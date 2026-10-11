@@ -16,7 +16,7 @@ const WEEKS_SHOWN = 12;
 
 /**
  * Totales de cada hábito medible activo: esta semana, este mes, desde que
- * existe y promedio diario, más un gráfico con el total de cada semana.
+ * existe y promedio de los días registrados, más un gráfico con el total de cada semana.
  */
 export function MeasurableStats({
   data,
@@ -38,7 +38,7 @@ export function MeasurableStats({
       <h2 className="font-semibold">Hábitos medibles</h2>
       {habits.map((habit) => {
         const entries = data.completions[habit.id];
-        const average = averageValue(habit, entries, today, WINDOW_DAYS);
+        const average = averageValue(entries, today, WINDOW_DAYS);
         const format = (n: number) => formatQuantity(habit, n);
         const tiles = [
           {
@@ -80,12 +80,14 @@ export function MeasurableStats({
                 </div>
               ))}
               <div>
-                <p className="text-xs text-muted">
-                  Promedio ({WINDOW_DAYS} días)
+                <p
+                  className="text-xs text-muted"
+                  title={`Promedio de los días con cantidad registrada en los últimos ${WINDOW_DAYS} días`}
+                >
+                  Prom. por día registrado
                 </p>
                 <p className="text-lg font-semibold tabular-nums">
                   {average === null ? "—" : format(average)}
-                  <span className="text-xs font-normal text-muted"> / día</span>
                 </p>
               </div>
             </div>

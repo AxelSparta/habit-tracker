@@ -47,12 +47,7 @@ export function StatsView() {
         total: done.size,
         average:
           habit.target != null
-            ? averageValue(
-                habit,
-                data.completions[habit.id],
-                today,
-                WINDOW_DAYS,
-              )
+            ? averageValue(data.completions[habit.id], today, WINDOW_DAYS)
             : null,
       };
     });
@@ -201,7 +196,8 @@ export function StatsView() {
                     {habit.target != null && (
                       <span className="block pl-7 text-xs text-muted">
                         Meta {describeTarget(habit)} · prom.{" "}
-                        {average === null ? "—" : formatAmount(average)}/día
+                        {average === null ? "—" : formatAmount(average)} por día
+                        registrado
                       </span>
                     )}
                   </td>

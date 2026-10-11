@@ -253,25 +253,37 @@ export function formatQuantity(habit: Habit, n: number): string {
 }
 
 /**
- * Promedio diario de un hábito medible en los últimos `days` días, contando
- * los días en que aplicaba (sin registro = 0). Hoy sólo cuenta si ya tiene
- * registro, para no bajar el promedio con un día que todavía no terminó.
+ * Promedio de un hábito medible en los últimos `days` días, contando sólo los
+ * días con una cantidad registrada: "cuando lo hago, ¿cuánto hago?". Los días
+ * sin cantidad (o con 0, como una nota sola) no cuentan.
  */
 export function averageValue(
-  habit: Habit,
   entries: Record<string, Entry> | undefined,
   today: string,
   days: number,
 ): number | null {
   let sum = 0;
   let count = 0;
-  for (const day of dayRange(addDays(today, -(days - 1)), today)) {
-    const entry = entries?.[day];
-    if (!appliesOn(habit, day) || (day === today && !entry)) continue;
-    sum += entry?.value ?? 0;
+  for (const value of rangeValues(
+    entries,
+    addDays(today, -(days - 1)),
+    today,
+  )) {
+    sum += value;
     count++;
   }
   return count === 0 ? null : sum / count;
+}
+
+/** Cantidades mayores que 0 registradas entre `from` y `to`. */
+function rangeValues(
+  entries: Record<string, Entry> | undefined,
+  from: string,
+  to: string,
+): number[] {
+  return Object.entries(entries ?? {})
+    .filter(([day, e]) => day >= from && day <= to && (e.value ?? 0) > 0)
+    .map(([, e]) => e.value!);
 }
 
 export function describeFrequency(frequency: Frequency): string {
