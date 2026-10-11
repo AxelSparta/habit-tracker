@@ -149,6 +149,14 @@ describe("toggleCompletion", () => {
     ]);
   });
 
+  it("ignora fechas futuras", async () => {
+    const before = data([habit("a", 0)]);
+    const { actions, state, calls } = setup(before);
+    await actions.toggleCompletion("a", "2999-01-01", false);
+    expect(state.data).toBe(before);
+    expect(calls).toEqual([]);
+  });
+
   it("si el servidor rechaza, recarga para descartar el cambio local", async () => {
     const { actions, onError, reload } = setup(data([habit("a", 0)]), () => ({
       error: { message: "falló" },

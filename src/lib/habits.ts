@@ -42,6 +42,15 @@ export function isScheduledOn(habit: Habit, day: string): boolean {
   }
 }
 
+/**
+ * Indica si el hábito se puede marcar en `day`: ya existía y ese día le toca
+ * (los semanales se pueden marcar cualquier día de la semana).
+ */
+export function appliesOn(habit: Habit, day: string): boolean {
+  if (day < habit.createdAt) return false;
+  return habit.frequency.type === "timesPerWeek" || isScheduledOn(habit, day);
+}
+
 /** Cantidad de veces completado en la semana que contiene `day`. */
 export function weekCount(done: Set<string>, day: string): number {
   const monday = startOfWeek(day);

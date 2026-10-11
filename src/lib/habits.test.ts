@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  appliesOn,
   bestStreak,
   completionRate,
   currentStreak,
@@ -136,5 +137,25 @@ describe("reorderSubset", () => {
       "a",
       "b",
     ]);
+  });
+});
+
+describe("appliesOn", () => {
+  it("no aplica antes de la creación del hábito", () => {
+    const h = habit({ type: "daily" }, MON);
+    expect(appliesOn(h, "2026-09-27")).toBe(false);
+    expect(appliesOn(h, MON)).toBe(true);
+  });
+
+  it("respeta los días fijos", () => {
+    const h = habit({ type: "weekdays", days: [0, 2] });
+    expect(appliesOn(h, MON)).toBe(true);
+    expect(appliesOn(h, "2026-09-29")).toBe(false);
+    expect(appliesOn(h, "2026-09-30")).toBe(true);
+  });
+
+  it("los semanales aplican cualquier día", () => {
+    const h = habit({ type: "timesPerWeek", count: 3 });
+    expect(appliesOn(h, "2026-10-04")).toBe(true);
   });
 });

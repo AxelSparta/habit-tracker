@@ -199,6 +199,7 @@ export function createActions(
 
     /** `wasDone`: si el día ya estaba marcado (lo que muestra la UI). */
     toggleCompletion(id: string, day: string, wasDone: boolean) {
+      if (day > todayKey()) return Promise.resolve();
       setData((d) => {
         const current = d.completions[id] ?? [];
         const next = wasDone

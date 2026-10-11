@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { addDays, startOfWeek, todayKey } from "@/lib/dates";
 import {
   bestStreak,
@@ -14,14 +14,16 @@ import {
 } from "@/lib/habits";
 import { useHabits } from "@/lib/store";
 import { ActivityHeatmap, Meter, WeeklyBars } from "./charts";
+import { DayEditor } from "./day-editor";
 import { Card, EmptyState, Loading, StreakBadge } from "./ui";
 
 const WINDOW_DAYS = 30;
 const WEEKS_SHOWN = 12;
 
 export function StatsView() {
-  const { data } = useHabits();
+  const { data, actions } = useHabits();
   const today = todayKey();
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     if (!data) return null;
@@ -125,12 +127,28 @@ export function StatsView() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold">Actividad</h2>
+        <h2 className="font-semibold">Actividad</h2>
+        <p className="mb-3 text-xs text-muted">
+          Tocá un día para corregir lo que marcaste.
+        </p>
         <ActivityHeatmap
           counts={stats.counts}
           today={today}
           maxPerDay={stats.maxPerDay}
+          selected={selectedDay}
+          onSelect={(day) =>
+            setSelectedDay((prev) => (prev === day ? null : day))
+          }
         />
+        {selectedDay && (
+          <DayEditor
+            data={data}
+            actions={actions}
+            day={selectedDay}
+            today={today}
+            onClose={() => setSelectedDay(null)}
+          />
+        )}
       </Card>
 
       <Card>

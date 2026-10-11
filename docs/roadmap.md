@@ -40,11 +40,11 @@ URL de producción con una cuenta real.
 Sin cambios de esquema. Hoy los días pasados sólo se marcan con las flechas de
 "Hoy".
 
-- [ ] En `charts.tsx`, hacer clickeables las celdas del heatmap (con soporte de
+- [x] En `charts.tsx`, hacer clickeables las celdas del heatmap (con soporte de
       teclado y `aria-label` con la fecha).
-- [ ] Al elegir un día, abrir un panel con los hábitos que aplicaban esa fecha
+- [x] Al elegir un día, abrir un panel con los hábitos que aplicaban esa fecha
       (respetando `createdAt` y la frecuencia) para marcar/desmarcar.
-- [ ] Reusar la acción de toggle del store; no permitir fechas futuras.
+- [x] Reusar la acción de toggle del store; no permitir fechas futuras.
 
 **Terminado cuando:** se puede corregir cualquier día pasado desde
 Estadísticas y las rachas se recalculan al instante.

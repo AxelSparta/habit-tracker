@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { WEEKDAY_SHORT, addDays, formatShort, startOfWeek } from "@/lib/dates";
+import {
+  WEEKDAY_SHORT,
+  addDays,
+  formatLong,
+  formatShort,
+  startOfWeek,
+} from "@/lib/dates";
 
 interface TipState {
   x: number;
@@ -72,12 +78,18 @@ export function ActivityHeatmap({
   today,
   weeks = 18,
   maxPerDay,
+  selected,
+  onSelect,
 }: {
   counts: Map<string, number>;
   today: string;
   weeks?: number;
   /** Valor que corresponde al color más intenso (p. ej. cantidad de hábitos). */
   maxPerDay: number;
+  /** Día elegido, que se resalta con un borde. */
+  selected?: string | null;
+  /** Si está, las celdas de días pasados (y hoy) se pueden elegir. */
+  onSelect?: (day: string) => void;
 }) {
   const tooltip = useTooltip();
   const firstMonday = addDays(startOfWeek(today), -(weeks - 1) * 7);
@@ -95,7 +107,7 @@ export function ActivityHeatmap({
 
   return (
     <div className="relative" onMouseLeave={tooltip.hide}>
-      <div className="flex gap-[3px] overflow-x-auto pb-1">
+      <div className="flex gap-[3px] overflow-x-auto p-0.5 pb-1">
         <div className="mr-1 grid grid-rows-7 gap-[3px] text-[10px] leading-none text-muted">
           {WEEKDAY_SHORT.map((d, i) => (
             <span key={d} className="flex h-3.5 items-center sm:h-4">
@@ -108,13 +120,20 @@ export function ActivityHeatmap({
             {col.map((day) => {
               const future = day > today;
               const n = counts.get(day) ?? 0;
+              const isSelected = day === selected;
               return (
-                <span
+                <button
+                  type="button"
                   key={day}
+                  disabled={future || !onSelect}
                   tabIndex={future ? -1 : 0}
+                  aria-pressed={onSelect && !future ? isSelected : undefined}
                   aria-label={
-                    future ? undefined : `${formatShort(day)}: ${n} completados`
+                    future
+                      ? undefined
+                      : `${formatLong(day)}: ${n} ${n === 1 ? "completado" : "completados"}`
                   }
+                  onClick={() => onSelect?.(day)}
                   onMouseEnter={(e) => {
                     if (future) return tooltip.hide();
                     const parent = e.currentTarget.closest(".relative")!;
@@ -131,7 +150,9 @@ export function ActivityHeatmap({
                       ),
                     });
                   }}
-                  className="size-3.5 rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-accent sm:size-4"
+                  className={`size-3.5 rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-accent enabled:cursor-pointer sm:size-4 ${
+                    isSelected ? "ring-2 ring-foreground" : ""
+                  }`}
                   style={{
                     background: future
                       ? "transparent"

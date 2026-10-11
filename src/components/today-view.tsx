@@ -3,12 +3,12 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { addDays, formatLong, startOfWeek, todayKey } from "@/lib/dates";
 import {
+  appliesOn,
   bestStreak,
   currentStreak,
   describeFrequency,
   getGlobalDays,
   getPeriods,
-  isScheduledOn,
   reorderSubset,
   streakUnit,
   weekCount,
@@ -78,9 +78,7 @@ export function TodayView() {
     );
   const label = (h: Habit) => h.name;
 
-  const dueToday = habits.filter(
-    (h) => h.frequency.type === "timesPerWeek" || isScheduledOn(h, day),
-  );
+  const dueToday = habits.filter((h) => appliesOn(h, day));
   const notToday = habits.filter((h) => !dueToday.includes(h));
   const doneCount = dueToday.filter((h) =>
     data.completions[h.id]?.includes(day),
