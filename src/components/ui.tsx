@@ -10,7 +10,7 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-xl border border-border bg-surface p-4 sm:p-5 ${className}`}
+      className={`rounded-2xl border border-border bg-surface p-4 sm:p-5 ${className}`}
     >
       {children}
     </section>
@@ -21,7 +21,7 @@ export function Loading() {
   return (
     <div className="space-y-3" aria-busy="true" aria-label="Cargando">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="h-16 animate-pulse rounded-xl bg-surface-2" />
+        <div key={i} className="h-16 animate-pulse rounded-2xl bg-surface-2" />
       ))}
     </div>
   );
@@ -45,7 +45,7 @@ export function EmptyState({
       {action ?? (
         <Link
           href="/habitos"
-          className="mt-4 inline-block rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+          className="mt-4 inline-block rounded-sm bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
         >
           Crear un hábito
         </Link>
@@ -57,8 +57,8 @@ export function EmptyState({
 export function StreakBadge({ value, unit }: { value: number; unit: string }) {
   return (
     <span
-      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium tabular-nums ${
-        value > 0 ? "bg-streak/15 text-foreground" : "bg-surface-2 text-muted"
+      className={`inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-sm px-1.5 py-0.5 font-mono text-xs font-medium font-mono tabular-nums ${
+        value > 0 ? "bg-streak/15 text-streak" : "bg-surface-2 text-muted"
       }`}
       title={`Racha actual: ${value} ${unit}`}
     >

@@ -43,7 +43,7 @@ export function DayEditor({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg px-2 py-1 text-sm text-muted hover:bg-surface-2 hover:text-foreground"
+          className="rounded-sm px-2 py-1 text-sm text-muted hover:bg-surface-2 hover:text-foreground"
           aria-label="Cerrar el día"
         >
           ✕
@@ -102,8 +102,8 @@ function DayHabitRow({
 
   return (
     <li
-      className={`rounded-lg border transition-colors ${
-        checked ? "border-accent bg-accent-soft/40" : "border-border"
+      className={`rounded-md border transition-colors ${
+        checked ? "border-success/40 bg-success-soft/30" : "border-border"
       }`}
     >
       <div className="flex items-stretch">
@@ -121,13 +121,15 @@ function DayHabitRow({
             type="button"
             onClick={() => actions.toggleCompletion(habit.id, day, checked)}
             aria-pressed={checked}
-            className={`${main} rounded-l-lg ${checked ? "" : "hover:bg-surface-2"}`}
+            className={`${main} rounded-l-md ${checked ? "" : "hover:bg-surface-2"}`}
           >
             {info}
             <span
               aria-hidden
-              className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 text-xs ${
-                checked ? "border-accent bg-accent text-white" : "border-border"
+              className={`flex size-5 shrink-0 items-center justify-center rounded-sm border-2 text-xs font-bold ${
+                checked
+                  ? "border-success bg-success text-success-foreground"
+                  : "border-muted/50"
               }`}
             >
               {checked && "✓"}
@@ -138,7 +140,7 @@ function DayHabitRow({
           hasNote={note !== ""}
           open={editingNote}
           habitName={habit.name}
-          rounded="rounded-r-lg"
+          rounded="rounded-r-md"
           onClick={() => setNoteDay(editingNote ? null : day)}
         />
       </div>

@@ -68,7 +68,7 @@ export function HabitsManager() {
     }
     return (
       <div
-        className={`flex items-center gap-3 rounded-xl border border-border bg-surface p-3 ${handle ? "pl-1.5" : ""}`}
+        className={`flex items-center gap-3 rounded-lg border border-border bg-surface p-3 ${handle ? "pl-1.5" : ""}`}
       >
         {handle}
         <span className="text-2xl" aria-hidden>
@@ -86,13 +86,13 @@ export function HabitsManager() {
             <>
               <button
                 onClick={() => actions.deleteHabit(h.id)}
-                className="rounded-md bg-danger px-2 py-1 text-white"
+                className="rounded-sm bg-danger px-2 py-1 text-danger-foreground"
               >
                 Borrar todo
               </button>
               <button
                 onClick={() => setConfirmDelete(null)}
-                className="rounded-md px-2 py-1 text-muted hover:text-foreground"
+                className="rounded-sm px-2 py-1 text-muted hover:text-foreground"
               >
                 No
               </button>
@@ -102,7 +102,7 @@ export function HabitsManager() {
               {!h.archived && (
                 <button
                   onClick={() => setEditing(h.id)}
-                  className="rounded-md px-2 py-1 text-muted hover:bg-surface-2 hover:text-foreground"
+                  className="rounded-sm px-2 py-1 text-muted hover:bg-surface-2 hover:text-foreground"
                 >
                   Editar
                 </button>
@@ -111,13 +111,13 @@ export function HabitsManager() {
                 onClick={() =>
                   actions.updateHabit(h.id, { archived: !h.archived })
                 }
-                className="rounded-md px-2 py-1 text-muted hover:bg-surface-2 hover:text-foreground"
+                className="rounded-sm px-2 py-1 text-muted hover:bg-surface-2 hover:text-foreground"
               >
                 {h.archived ? "Restaurar" : "Archivar"}
               </button>
               <button
                 onClick={() => setConfirmDelete(h.id)}
-                className="rounded-md px-2 py-1 text-danger hover:bg-surface-2"
+                className="rounded-sm px-2 py-1 text-danger hover:bg-surface-2"
               >
                 Borrar
               </button>
@@ -186,14 +186,14 @@ export function HabitsManager() {
         <div className="mt-3 flex flex-wrap gap-2 text-sm">
           <button
             onClick={exportData}
-            className="rounded-lg border border-border px-3 py-1.5 hover:bg-surface-2"
+            className="rounded-sm border border-border px-3 py-1.5 hover:bg-surface-2"
           >
             Exportar JSON
           </button>
           <button
             onClick={() => fileRef.current?.click()}
             disabled={importing}
-            className="rounded-lg border border-border px-3 py-1.5 hover:bg-surface-2 disabled:opacity-50"
+            className="rounded-sm border border-border px-3 py-1.5 hover:bg-surface-2 disabled:opacity-50"
           >
             {importing ? "Importando…" : "Importar JSON"}
           </button>

@@ -30,7 +30,7 @@ export function ValueStepper({
   }
 
   const button =
-    "flex size-8 shrink-0 items-center justify-center rounded-full border border-border text-lg leading-none hover:bg-surface-2 disabled:opacity-30 disabled:hover:bg-transparent";
+    "flex size-8 shrink-0 items-center justify-center rounded-sm border border-border text-lg leading-none hover:bg-surface-2 disabled:opacity-30 disabled:hover:bg-transparent";
 
   return (
     <div className="flex items-center gap-1.5">
@@ -62,7 +62,7 @@ export function ValueStepper({
         }}
         disabled={disabled}
         aria-label={`Cantidad de ${habit.name}, meta ${describeTarget(habit)}`}
-        className="w-12 rounded-md border border-transparent bg-transparent py-1 text-center font-medium tabular-nums outline-none hover:border-border focus:border-accent disabled:hover:border-transparent"
+        className="w-12 rounded-sm border border-transparent bg-transparent py-1 text-center font-medium font-mono tabular-nums outline-none hover:border-border focus:border-accent disabled:hover:border-transparent"
       />
       <button
         type="button"
@@ -94,7 +94,7 @@ export function TargetProgress({
           style={{ width: `${ratio * 100}%` }}
         />
       </span>
-      <span className="whitespace-nowrap tabular-nums">
+      <span className="whitespace-nowrap font-mono tabular-nums">
         {formatAmount(value)} / {describeTarget(habit)}
       </span>
     </span>

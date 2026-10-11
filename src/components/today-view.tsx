@@ -62,7 +62,7 @@ export function TodayView() {
           action={
             <button
               onClick={() => setAdding(true)}
-              className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white"
+              className="mt-4 rounded-sm bg-accent px-4 py-2 text-sm font-medium text-accent-foreground"
             >
               Crear un hábito
             </button>
@@ -93,7 +93,7 @@ export function TodayView() {
       <div className="flex items-center justify-between gap-3">
         <button
           onClick={() => setDay(addDays(day, -1))}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2"
+          className="rounded-sm border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2"
           aria-label="Día anterior"
         >
           ←
@@ -109,7 +109,7 @@ export function TodayView() {
         <button
           onClick={() => setDay(addDays(day, 1))}
           disabled={day >= today}
-          className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 disabled:opacity-30"
+          className="rounded-sm border border-border bg-surface px-3 py-1.5 text-sm hover:bg-surface-2 disabled:opacity-30"
           aria-label="Día siguiente"
         >
           →
@@ -118,23 +118,30 @@ export function TodayView() {
 
       <div className="grid grid-cols-3 gap-3">
         <Card>
-          <p className="text-xs text-muted">Racha general</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">
-            {global.current > 0 && <span aria-hidden>🔥</span>}
-            {global.current}
+          <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
+            Racha general
+          </p>
+          <p className="mt-1 text-3xl font-semibold font-mono tabular-nums">
+            <span className={global.current > 0 ? "text-streak" : ""}>
+              {global.current}
+            </span>
           </p>
           <p className="text-xs text-muted">días</p>
         </Card>
         <Card>
-          <p className="text-xs text-muted">Mejor racha</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">
+          <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
+            Mejor racha
+          </p>
+          <p className="mt-1 text-3xl font-semibold font-mono tabular-nums">
             {global.best}
           </p>
           <p className="text-xs text-muted">días</p>
         </Card>
         <Card>
-          <p className="text-xs text-muted">Completados</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">
+          <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
+            Completados
+          </p>
+          <p className="mt-1 text-3xl font-semibold font-mono tabular-nums">
             {doneCount}
             <span className="text-lg text-muted">/{dueToday.length}</span>
           </p>
@@ -165,7 +172,7 @@ export function TodayView() {
         {newHabit || (
           <button
             onClick={() => setAdding(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent"
+            className="flex w-full items-center justify-center gap-2 rounded-sm border border-dashed border-border p-3 text-sm font-medium text-muted transition-colors hover:border-accent hover:text-accent"
           >
             <span aria-hidden className="text-lg leading-none">
               +
@@ -262,9 +269,9 @@ function HabitRow({
 
   return (
     <div
-      className={`rounded-xl border transition-colors ${
+      className={`rounded-lg border transition-colors ${
         checked
-          ? "border-accent bg-accent-soft/40"
+          ? "border-success/40 bg-success-soft/30"
           : measurable
             ? "border-border bg-surface"
             : "border-border bg-surface has-[button:enabled:hover]:bg-surface-2"
@@ -292,8 +299,10 @@ function HabitRow({
             {content}
             <span
               aria-hidden
-              className={`flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
-                checked ? "border-accent bg-accent text-white" : "border-border"
+              className={`flex size-6 shrink-0 items-center justify-center rounded-sm border-2 text-sm font-bold ${
+                checked
+                  ? "border-success bg-success text-success-foreground"
+                  : "border-muted/50"
               }`}
             >
               {checked && "✓"}

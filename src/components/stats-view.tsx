@@ -134,8 +134,10 @@ export function StatsView() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {tiles.map((t) => (
           <Card key={t.label}>
-            <p className="text-xs text-muted">{t.label}</p>
-            <p className="mt-1 text-3xl font-semibold tabular-nums">
+            <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
+              {t.label}
+            </p>
+            <p className="mt-1 text-3xl font-semibold font-mono tabular-nums">
               {t.value}
             </p>
             <p className="text-xs text-muted">{t.unit}</p>
@@ -215,13 +217,13 @@ export function StatsView() {
                   <td className="py-2.5 pr-3">
                     <StreakBadge value={current} unit={streakUnit(habit)} />
                   </td>
-                  <td className="hidden py-2.5 pr-3 tabular-nums sm:table-cell">
+                  <td className="hidden py-2.5 pr-3 font-mono tabular-nums sm:table-cell">
                     {best} {streakUnit(habit)}
                   </td>
                   <td className="py-2.5 pr-3">
                     <Meter value={rate} />
                   </td>
-                  <td className="hidden py-2.5 text-right tabular-nums sm:table-cell">
+                  <td className="hidden py-2.5 text-right font-mono tabular-nums sm:table-cell">
                     {total}
                   </td>
                 </tr>

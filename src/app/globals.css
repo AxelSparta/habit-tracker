@@ -2,42 +2,54 @@
 
 :root {
   color-scheme: light;
-  --background: #f6f6f4;
-  --surface: #fcfcfb;
-  --surface-2: #efeeea;
-  --border: #e2e1dc;
-  --foreground: #0b0b0b;
-  --muted: #52514e;
-  --accent: #2a78d6;
-  --accent-soft: #cde2fb;
-  --streak: #eb6834;
-  --danger: #c4314b;
-  /* Rampa secuencial (azul) para el heatmap: de "nada" a "mucho". */
-  --heat-0: #efeeea;
-  --heat-1: #b7d3f6;
-  --heat-2: #6da7ec;
-  --heat-3: #2a78d6;
-  --heat-4: #184f95;
+  --background: #f3f4f7;
+  --surface: #ffffff;
+  --surface-2: #e9ebf0;
+  --border: #dcdfe6;
+  --foreground: #12151c;
+  --muted: #545a69;
+  /* Primario (índigo), secundario (esmeralda) y terciario (ámbar). */
+  --accent: #4f46e5;
+  --accent-foreground: #ffffff;
+  --accent-soft: #e0e7ff;
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --success-soft: #d1fae5;
+  --streak: #d97706;
+  --danger: #dc2626;
+  --danger-foreground: #ffffff;
+  /* Rampa secuencial (esmeralda) para el heatmap: de "nada" a "mucho". */
+  --heat-0: #e9ebf0;
+  --heat-1: #a7f3d0;
+  --heat-2: #34d399;
+  --heat-3: #059669;
+  --heat-4: #065f46;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     color-scheme: dark;
-    --background: #121211;
-    --surface: #1a1a19;
-    --surface-2: #262624;
-    --border: #33332f;
-    --foreground: #ffffff;
-    --muted: #c3c2b7;
-    --accent: #3987e5;
-    --accent-soft: #184f95;
-    --streak: #d95926;
-    --danger: #e0566e;
-    --heat-0: #262624;
-    --heat-1: #104281;
-    --heat-2: #1c5cab;
-    --heat-3: #3987e5;
-    --heat-4: #86b6ef;
+    /* Neutro de la paleta: #12151C. */
+    --background: #12151c;
+    --surface: #1a1d26;
+    --surface-2: #242833;
+    --border: #2c303c;
+    --foreground: #e6e7ee;
+    --muted: #9599a8;
+    --accent: #818cf8;
+    --accent-foreground: #1e1b4b;
+    --accent-soft: #312e81;
+    --success: #34d399;
+    --success-foreground: #022c22;
+    --success-soft: #064e3b;
+    --streak: #fbbf24;
+    --danger: #f87171;
+    --danger-foreground: #450a0a;
+    --heat-0: #242833;
+    --heat-1: #065f46;
+    --heat-2: #047857;
+    --heat-3: #10b981;
+    --heat-4: #6ee7b7;
   }
 }
 
@@ -48,6 +60,7 @@
  */
 :root {
   --app-accent: var(--accent);
+  --app-accent-foreground: var(--accent-foreground);
 }
 
 @theme inline {
@@ -58,11 +71,16 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
   --color-accent-soft: var(--accent-soft);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
   --color-streak: var(--streak);
   --color-danger: var(--danger);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-danger-foreground: var(--danger-foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 body {

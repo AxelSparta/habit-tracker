@@ -138,7 +138,7 @@ function SortableItem({
         transition,
       }}
       className={
-        isDragging ? "relative z-10 rounded-xl opacity-80 shadow-lg" : undefined
+        isDragging ? "relative z-10 rounded-lg opacity-80 shadow-lg" : undefined
       }
     >
       {children(
@@ -149,7 +149,7 @@ function SortableItem({
           {...listeners}
           aria-label={`Reordenar ${label}`}
           // `touch-none`: en el celular, arrastrar la manija no hace scroll.
-          className="flex shrink-0 cursor-grab touch-none items-center self-stretch rounded-md px-1 text-muted hover:text-foreground active:cursor-grabbing"
+          className="flex shrink-0 cursor-grab touch-none items-center self-stretch rounded-sm px-1 text-muted hover:text-foreground active:cursor-grabbing"
         >
           <svg
             aria-hidden

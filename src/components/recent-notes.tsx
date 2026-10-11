@@ -34,7 +34,7 @@ export function RecentNotes({
   }
 
   const chip = (active: boolean) =>
-    `rounded-full border px-3 py-1 text-xs ${
+    `rounded-sm border px-2.5 py-1 text-xs ${
       active
         ? "border-accent bg-accent-soft/40"
         : "border-border text-muted hover:text-foreground"

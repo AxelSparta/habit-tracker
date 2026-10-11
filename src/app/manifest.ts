@@ -13,8 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     // Mismo fondo que el modo claro de globals.css: es el color de la
     // pantalla de carga al abrir la app instalada.
-    background_color: "#f6f6f4",
-    theme_color: "#f6f6f4",
+    background_color: "#f3f4f7",
+    theme_color: "#f3f4f7",
     categories: ["productivity", "health", "lifestyle"],
     icons: [
       { src: "/icon-192.png", sizes: "192x192", type: "image/png" },

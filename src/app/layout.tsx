@@ -1,17 +1,18 @@
 import { ClerkProvider } from "@clerk/nextjs";
 import { esUY } from "@clerk/localizations";
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import { ServiceWorker } from "@/components/service-worker";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Inter para el texto y JetBrains Mono para números, fechas y etiquetas.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
   subsets: ["latin"],
 });
 
@@ -28,12 +29,12 @@ const clerkAppearance = {
     colorInputForeground: "var(--foreground)",
     colorBorder: "var(--foreground)",
     colorPrimary: "var(--app-accent)",
-    colorPrimaryForeground: "#ffffff",
+    colorPrimaryForeground: "var(--app-accent-foreground)",
     colorDanger: "var(--danger)",
     colorRing: "var(--app-accent)",
     colorNeutral: "var(--foreground)",
     colorModalBackdrop: "rgb(0 0 0 / 0.5)",
-    fontFamily: "var(--font-geist-sans)",
+    fontFamily: "var(--font-inter)",
   },
 };
 
@@ -49,8 +50,8 @@ export const metadata: Metadata = {
 // Color de la barra del sistema, igual al fondo de cada modo (globals.css).
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f6f4" },
-    { media: "(prefers-color-scheme: dark)", color: "#121211" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f4f7" },
+    { media: "(prefers-color-scheme: dark)", color: "#12151c" },
   ],
 };
 
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="es"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
         <ClerkProvider localization={esUY} appearance={clerkAppearance}>

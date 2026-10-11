@@ -8,7 +8,7 @@ export function ErrorBanner() {
   return (
     <div
       role="alert"
-      className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-danger/40 bg-danger/10 p-3 text-sm"
+      className="mb-4 flex items-start justify-between gap-3 rounded-lg border border-danger/40 bg-danger/10 p-3 text-sm"
     >
       <p>
         <span className="font-medium">

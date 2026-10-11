@@ -187,7 +187,7 @@ export function HabitForm({
           placeholder="Ej: Leer 20 minutos"
           autoFocus={autoFocus}
           maxLength={60}
-          className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+          className="w-full rounded-sm border border-border bg-background px-3 py-2 outline-none focus:border-accent"
         />
       </div>
 
@@ -198,7 +198,7 @@ export function HabitForm({
             {emoji}
           </span>
         </legend>
-        <div className="max-h-64 space-y-3 overflow-y-auto rounded-lg border border-border p-2">
+        <div className="max-h-64 space-y-3 overflow-y-auto rounded-sm border border-border p-2">
           {EMOJI_GROUPS.map((group) => (
             <div key={group.label}>
               <p className="mb-1 text-xs text-muted">{group.label}</p>
@@ -209,7 +209,7 @@ export function HabitForm({
                     key={e}
                     onClick={() => setEmoji(e)}
                     aria-pressed={emoji === e}
-                    className={`size-10 rounded-lg border text-xl ${
+                    className={`size-10 rounded-sm border text-xl ${
                       emoji === e
                         ? "border-accent bg-accent-soft/40"
                         : "border-transparent hover:bg-surface-2"
@@ -236,7 +236,7 @@ export function HabitForm({
           ).map(([value, label]) => (
             <label
               key={value}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+              className={`flex cursor-pointer items-center gap-2 rounded-sm border px-3 py-2 text-sm ${
                 mode === value
                   ? "border-accent bg-accent-soft/40"
                   : "border-border"
@@ -264,9 +264,9 @@ export function HabitForm({
                 onClick={() => toggleDay(d)}
                 aria-pressed={days.includes(d)}
                 aria-label={WEEKDAY_NAMES[d]}
-                className={`size-10 rounded-full border text-sm font-medium ${
+                className={`size-10 rounded-sm border font-mono text-sm font-medium ${
                   days.includes(d)
-                    ? "border-accent bg-accent text-white"
+                    ? "border-accent bg-accent text-accent-foreground"
                     : "border-border text-muted"
                 }`}
               >
@@ -287,7 +287,7 @@ export function HabitForm({
               className="flex-1 accent-accent"
               aria-label="Veces por semana"
             />
-            <span className="w-28 tabular-nums">
+            <span className="w-28 font-mono tabular-nums">
               {count} {count === 1 ? "vez" : "veces"} / semana
             </span>
           </div>
@@ -305,7 +305,7 @@ export function HabitForm({
           ).map(([value, label, hint]) => (
             <label
               key={label}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
+              className={`flex cursor-pointer items-center gap-2 rounded-sm border px-3 py-2 text-sm ${
                 measurable === value
                   ? "border-accent bg-accent-soft/40"
                   : "border-border"
@@ -343,7 +343,7 @@ export function HabitForm({
                 step="any"
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 tabular-nums outline-none focus:border-accent"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 font-mono tabular-nums outline-none focus:border-accent"
               />
             </div>
             <div className="flex-1">
@@ -359,7 +359,7 @@ export function HabitForm({
                 onChange={(e) => setUnit(e.target.value)}
                 placeholder="Ej: vasos, min, páginas"
                 maxLength={20}
-                className="w-full rounded-lg border border-border bg-background px-3 py-2 outline-none focus:border-accent"
+                className="w-full rounded-sm border border-border bg-background px-3 py-2 outline-none focus:border-accent"
               />
             </div>
           </div>
@@ -370,7 +370,7 @@ export function HabitForm({
         <button
           type="submit"
           disabled={!valid}
-          className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-40"
+          className="rounded-sm bg-accent px-4 py-2 text-sm font-medium text-accent-foreground disabled:opacity-40"
         >
           {submitLabel}
         </button>
@@ -378,7 +378,7 @@ export function HabitForm({
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-lg border border-border px-4 py-2 text-sm"
+            className="rounded-sm border border-border px-4 py-2 text-sm"
           >
             Cancelar
           </button>

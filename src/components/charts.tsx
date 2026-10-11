@@ -39,7 +39,7 @@ function useTooltip() {
     <div
       ref={ref}
       role="tooltip"
-      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md border border-border bg-surface px-2 py-1 text-xs shadow-md"
+      className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-sm border border-border bg-surface px-2 py-1 text-xs shadow-md"
       style={{ left: tip.x + shift, top: tip.y - 8 }}
     >
       {tip.content}
@@ -149,7 +149,9 @@ export function ActivityHeatmap({
                           <span className="text-muted">
                             {formatShort(day)} ·{" "}
                           </span>
-                          <span className="font-medium tabular-nums">{n}</span>{" "}
+                          <span className="font-medium font-mono tabular-nums">
+                            {n}
+                          </span>{" "}
                           {n === 1 ? "completado" : "completados"}
                           {hasNote && " · 📝"}
                         </>
@@ -295,7 +297,7 @@ export function WeeklyBars({
                         <span className="text-muted">
                           Semana del {formatShort(d.week)} ·{" "}
                         </span>
-                        <span className="font-medium tabular-nums">
+                        <span className="font-medium font-mono tabular-nums">
                           {format(d.value)}
                         </span>
                       </>
@@ -354,7 +356,7 @@ export function Meter({ value }: { value: number | null }) {
           />
         )}
       </div>
-      <span className="w-9 text-right text-xs tabular-nums">
+      <span className="w-9 text-right text-xs font-mono tabular-nums">
         {value === null ? "—" : `${Math.round(value * 100)}%`}
       </span>
     </div>

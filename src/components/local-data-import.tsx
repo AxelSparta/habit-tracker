@@ -49,7 +49,7 @@ export function LocalDataImport() {
   }
 
   return (
-    <div className="mb-6 rounded-xl border border-accent/40 bg-accent-soft/30 p-4 text-sm">
+    <div className="mb-6 rounded-lg border border-accent/40 bg-accent-soft/30 p-4 text-sm">
       <p className="font-medium">
         Encontramos {legacy.count}{" "}
         {legacy.count === 1 ? "hábito guardado" : "hábitos guardados"} en este
@@ -68,14 +68,14 @@ export function LocalDataImport() {
         <button
           onClick={importNow}
           disabled={status === "working"}
-          className="rounded-lg bg-accent px-3 py-1.5 font-medium text-white disabled:opacity-50"
+          className="rounded-sm bg-accent px-3 py-1.5 font-medium text-accent-foreground disabled:opacity-50"
         >
           {status === "working" ? "Importando…" : "Importar a mi cuenta"}
         </button>
         <button
           onClick={forget}
           disabled={status === "working"}
-          className="rounded-lg border border-border px-3 py-1.5"
+          className="rounded-sm border border-border px-3 py-1.5"
         >
           Descartar
         </button>

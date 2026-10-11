@@ -73,8 +73,10 @@ export function MeasurableStats({
             <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
               {tiles.map((t) => (
                 <div key={t.label}>
-                  <p className="text-xs text-muted">{t.label}</p>
-                  <p className="text-lg font-semibold tabular-nums">
+                  <p className="font-mono text-[11px] uppercase tracking-wider text-muted">
+                    {t.label}
+                  </p>
+                  <p className="text-lg font-semibold font-mono tabular-nums">
                     {format(t.value)}
                   </p>
                 </div>
@@ -86,7 +88,7 @@ export function MeasurableStats({
                 >
                   Prom. por día registrado
                 </p>
-                <p className="text-lg font-semibold tabular-nums">
+                <p className="text-lg font-semibold font-mono tabular-nums">
                   {average === null ? "—" : format(average)}
                 </p>
               </div>
