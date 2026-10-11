@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { formatLong } from "@/lib/dates";
 import { appliesOn, describeFrequency, isDone } from "@/lib/habits";
 import type { HabitActions } from "@/lib/store";
-import type { HabitData } from "@/lib/types";
+import type { Entry, Habit, HabitData } from "@/lib/types";
+import { NoteButton, NoteEditor, NotePreview } from "./note-editor";
 import { TargetProgress, ValueStepper } from "./value-stepper";
 
 /** Lista los hábitos activos que aplicaban en `day` para marcarlos o desmarcarlos. */
@@ -48,65 +50,105 @@ export function DayEditor({
         </button>
       </div>
       <ul className="space-y-2">
-        {habits.map((h) => {
-          const entry = data.completions[h.id]?.[day];
-          const checked = isDone(h, entry);
-          const info = (
-            <>
-              <span className="text-xl" aria-hidden>
-                {h.emoji}
-              </span>
-              <span className="min-w-0 flex-1 basis-32">
-                <span className="block truncate text-sm font-medium">
-                  {h.name}
-                </span>
-                <span className="block text-xs text-muted">
-                  {describeFrequency(h.frequency)}
-                </span>
-                {h.target != null && (
-                  <TargetProgress habit={h} value={entry?.value ?? 0} />
-                )}
-              </span>
-            </>
-          );
-          const box = `flex w-full items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors ${
-            checked ? "border-accent bg-accent-soft/40" : "border-border"
-          }`;
-          return (
-            <li key={h.id}>
-              {h.target != null ? (
-                <div className={`${box} flex-wrap gap-y-2`}>
-                  {info}
-                  <ValueStepper
-                    habit={h}
-                    value={entry?.value ?? 0}
-                    onChange={(n) => actions.setValue(h.id, day, n)}
-                  />
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => actions.toggleCompletion(h.id, day, checked)}
-                  aria-pressed={checked}
-                  className={`${box} ${checked ? "" : "hover:bg-surface-2"}`}
-                >
-                  {info}
-                  <span
-                    aria-hidden
-                    className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 text-xs ${
-                      checked
-                        ? "border-accent bg-accent text-white"
-                        : "border-border"
-                    }`}
-                  >
-                    {checked && "✓"}
-                  </span>
-                </button>
-              )}
-            </li>
-          );
-        })}
+        {habits.map((h) => (
+          <DayHabitRow
+            key={h.id}
+            habit={h}
+            day={day}
+            entry={data.completions[h.id]?.[day]}
+            actions={actions}
+          />
+        ))}
       </ul>
     </div>
+  );
+}
+
+function DayHabitRow({
+  habit,
+  day,
+  entry,
+  actions,
+}: {
+  habit: Habit;
+  day: string;
+  entry: Entry | undefined;
+  actions: HabitActions;
+}) {
+  const checked = isDone(habit, entry);
+  const note = entry?.note ?? "";
+  // Se guarda el día: si se elige otro día con la nota abierta, se cierra.
+  const [noteDay, setNoteDay] = useState<string | null>(null);
+  const editingNote = noteDay === day;
+
+  const info = (
+    <>
+      <span className="text-xl" aria-hidden>
+        {habit.emoji}
+      </span>
+      <span className="min-w-0 flex-1 basis-32">
+        <span className="block truncate text-sm font-medium">{habit.name}</span>
+        <span className="block text-xs text-muted">
+          {describeFrequency(habit.frequency)}
+        </span>
+        {habit.target != null && (
+          <TargetProgress habit={habit} value={entry?.value ?? 0} />
+        )}
+        {note && !editingNote && <NotePreview note={note} />}
+      </span>
+    </>
+  );
+  const main = "flex min-w-0 flex-1 items-center gap-3 px-3 py-2 text-left";
+
+  return (
+    <li
+      className={`rounded-lg border transition-colors ${
+        checked ? "border-accent bg-accent-soft/40" : "border-border"
+      }`}
+    >
+      <div className="flex items-stretch">
+        {habit.target != null ? (
+          <div className={`${main} flex-wrap gap-y-2`}>
+            {info}
+            <ValueStepper
+              habit={habit}
+              value={entry?.value ?? 0}
+              onChange={(n) => actions.setValue(habit.id, day, n)}
+            />
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => actions.toggleCompletion(habit.id, day, checked)}
+            aria-pressed={checked}
+            className={`${main} rounded-l-lg ${checked ? "" : "hover:bg-surface-2"}`}
+          >
+            {info}
+            <span
+              aria-hidden
+              className={`flex size-6 shrink-0 items-center justify-center rounded-full border-2 text-xs ${
+                checked ? "border-accent bg-accent text-white" : "border-border"
+              }`}
+            >
+              {checked && "✓"}
+            </span>
+          </button>
+        )}
+        <NoteButton
+          hasNote={note !== ""}
+          open={editingNote}
+          habitName={habit.name}
+          rounded="rounded-r-lg"
+          onClick={() => setNoteDay(editingNote ? null : day)}
+        />
+      </div>
+      {editingNote && (
+        <NoteEditor
+          initial={note}
+          onSave={(text) => actions.setNote(habit.id, day, text)}
+          onClose={() => setNoteDay(null)}
+        />
+      )}
+    </li>
   );
 }

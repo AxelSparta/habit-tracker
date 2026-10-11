@@ -88,13 +88,13 @@ racha sólo cuenta los días con 8 o más.
 
 ## Fase 4 — Notas por check-in
 
-- [ ] Ícono de nota en cada hábito de "Hoy" (y en el panel de la fase 1) que
+- [x] Ícono de nota en cada hábito de "Hoy" (y en el panel de la fase 1) que
       abre un textarea; se guarda en `completions.note`.
-- [ ] Decidir si una nota sin completar es válida. Propuesta: sí, como una
-      entrada con `value = 0` que no cuenta para la racha (`isDone` ya lo
-      contempla desde la fase 2). Al desmarcar un día con nota, pasar a
-      `value = 0` en vez de borrar la fila.
-- [ ] Indicador en el heatmap de los días con nota y lista de notas recientes
+- [x] Una nota sin completar es válida: es una entrada con `value = 0` que no
+      cuenta para la racha. Al desmarcar un día con nota pasa a `value = 0`
+      en vez de borrar la fila, y al vaciar la nota de una entrada así se
+      borra la fila.
+- [x] Indicador en el heatmap de los días con nota y lista de notas recientes
       por hábito en Estadísticas.
 
 **Terminado cuando:** se puede escribir, editar y ver la nota de cualquier día.

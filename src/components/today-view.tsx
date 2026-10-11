@@ -16,8 +16,9 @@ import {
   weekCount,
 } from "@/lib/habits";
 import { useHabits, type HabitActions } from "@/lib/store";
-import type { Habit } from "@/lib/types";
+import type { Entry, Habit } from "@/lib/types";
 import { HabitForm } from "./habit-form";
+import { NoteButton, NoteEditor, NotePreview } from "./note-editor";
 import { SortableList } from "./sortable-list";
 import { Card, EmptyState, Loading, StreakBadge } from "./ui";
 import { TargetProgress, ValueStepper } from "./value-stepper";
@@ -156,7 +157,7 @@ export function TodayView() {
               day={day}
               today={today}
               done={doneDays(h, data.completions[h.id])}
-              value={data.completions[h.id]?.[day]?.value ?? 0}
+              entry={data.completions[h.id]?.[day]}
               handle={handle}
             />
           )}
@@ -191,7 +192,7 @@ export function TodayView() {
                 day={day}
                 today={today}
                 done={doneDays(h, data.completions[h.id])}
-                value={data.completions[h.id]?.[day]?.value ?? 0}
+                entry={data.completions[h.id]?.[day]}
                 handle={handle}
                 disabled
               />
@@ -215,7 +216,7 @@ function HabitRow({
   day,
   today,
   done,
-  value,
+  entry,
   handle,
   disabled = false,
 }: {
@@ -225,8 +226,8 @@ function HabitRow({
   today: string;
   /** Fechas en que el hábito quedó completado. */
   done: Set<string>;
-  /** Cantidad registrada ese día (hábitos medibles). */
-  value: number;
+  /** Registro de ese día (cantidad y nota). */
+  entry: Entry | undefined;
   /** Manija para reordenar arrastrando. */
   handle: ReactNode;
   disabled?: boolean;
@@ -234,6 +235,11 @@ function HabitRow({
   const checked = done.has(day);
   const streak = currentStreak(getPeriods(habit, done, today));
   const measurable = habit.target != null;
+  const value = entry?.value ?? 0;
+  const note = entry?.note ?? "";
+  // Se guarda el día: si se cambia de día con la nota abierta, se cierra.
+  const [noteDay, setNoteDay] = useState<string | null>(null);
+  const editingNote = noteDay === day;
 
   const content = (
     <>
@@ -248,6 +254,7 @@ function HabitRow({
             ` · ${weekCount(done, day)}/${habit.frequency.count} ${startOfWeek(day) === startOfWeek(today) ? "esta semana" : "esa semana"}`}
         </span>
         {measurable && <TargetProgress habit={habit} value={value} />}
+        {note && !editingNote && <NotePreview note={note} />}
       </span>
       <StreakBadge value={streak} unit={streakUnit(habit)} />
     </>
@@ -255,7 +262,7 @@ function HabitRow({
 
   return (
     <div
-      className={`flex items-stretch rounded-xl border pl-1.5 transition-colors ${
+      className={`rounded-xl border transition-colors ${
         checked
           ? "border-accent bg-accent-soft/40"
           : measurable
@@ -263,34 +270,50 @@ function HabitRow({
             : "border-border bg-surface has-[button:enabled:hover]:bg-surface-2"
       }`}
     >
-      {handle}
-      {measurable ? (
-        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2 py-3 pr-3 pl-1.5 sm:py-4 sm:pr-4">
-          {content}
-          <ValueStepper
-            habit={habit}
-            value={value}
+      <div className="flex items-stretch pl-1.5">
+        {handle}
+        {measurable ? (
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-3 gap-y-2 py-3 pr-2 pl-1.5 sm:py-4">
+            {content}
+            <ValueStepper
+              habit={habit}
+              value={value}
+              disabled={disabled}
+              onChange={(n) => actions.setValue(habit.id, day, n)}
+            />
+          </div>
+        ) : (
+          <button
+            onClick={() => actions.toggleCompletion(habit.id, day, checked)}
             disabled={disabled}
-            onChange={(n) => actions.setValue(habit.id, day, n)}
-          />
-        </div>
-      ) : (
-        <button
-          onClick={() => actions.toggleCompletion(habit.id, day, checked)}
-          disabled={disabled}
-          aria-pressed={checked}
-          className="flex min-w-0 flex-1 items-center gap-3 rounded-r-xl py-3 pr-3 pl-1.5 text-left disabled:cursor-not-allowed sm:py-4 sm:pr-4"
-        >
-          {content}
-          <span
-            aria-hidden
-            className={`flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
-              checked ? "border-accent bg-accent text-white" : "border-border"
-            }`}
+            aria-pressed={checked}
+            className="flex min-w-0 flex-1 items-center gap-3 py-3 pr-2 pl-1.5 text-left disabled:cursor-not-allowed sm:py-4"
           >
-            {checked && "✓"}
-          </span>
-        </button>
+            {content}
+            <span
+              aria-hidden
+              className={`flex size-7 shrink-0 items-center justify-center rounded-full border-2 text-sm ${
+                checked ? "border-accent bg-accent text-white" : "border-border"
+              }`}
+            >
+              {checked && "✓"}
+            </span>
+          </button>
+        )}
+        <NoteButton
+          hasNote={note !== ""}
+          open={editingNote}
+          habitName={habit.name}
+          disabled={disabled}
+          onClick={() => setNoteDay(editingNote ? null : day)}
+        />
+      </div>
+      {editingNote && (
+        <NoteEditor
+          initial={note}
+          onSave={(text) => actions.setNote(habit.id, day, text)}
+          onClose={() => setNoteDay(null)}
+        />
       )}
     </div>
   );

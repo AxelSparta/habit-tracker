@@ -81,6 +81,7 @@ export function ActivityHeatmap({
   maxPerDay,
   selected,
   onSelect,
+  notes,
 }: {
   counts: Map<string, number>;
   today: string;
@@ -91,6 +92,8 @@ export function ActivityHeatmap({
   selected?: string | null;
   /** Si está, las celdas de días pasados (y hoy) se pueden elegir. */
   onSelect?: (day: string) => void;
+  /** Días con alguna nota: se marcan con un punto. */
+  notes?: Set<string>;
 }) {
   const tooltip = useTooltip();
   const firstMonday = addDays(startOfWeek(today), -(weeks - 1) * 7);
@@ -122,6 +125,7 @@ export function ActivityHeatmap({
               const future = day > today;
               const n = counts.get(day) ?? 0;
               const isSelected = day === selected;
+              const hasNote = !future && !!notes?.has(day);
               return (
                 <button
                   type="button"
@@ -132,7 +136,7 @@ export function ActivityHeatmap({
                   aria-label={
                     future
                       ? undefined
-                      : `${formatLong(day)}: ${n} ${n === 1 ? "completado" : "completados"}`
+                      : `${formatLong(day)}: ${n} ${n === 1 ? "completado" : "completados"}${hasNote ? ", con nota" : ""}`
                   }
                   onClick={() => onSelect?.(day)}
                   onMouseEnter={(e) => {
@@ -147,11 +151,12 @@ export function ActivityHeatmap({
                           </span>
                           <span className="font-medium tabular-nums">{n}</span>{" "}
                           {n === 1 ? "completado" : "completados"}
+                          {hasNote && " · 📝"}
                         </>
                       ),
                     });
                   }}
-                  className={`size-3.5 rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-accent enabled:cursor-pointer sm:size-4 ${
+                  className={`flex size-3.5 items-center justify-center rounded-[3px] outline-none focus-visible:ring-2 focus-visible:ring-accent enabled:cursor-pointer sm:size-4 ${
                     isSelected ? "ring-2 ring-foreground" : ""
                   }`}
                   style={{
@@ -159,7 +164,14 @@ export function ActivityHeatmap({
                       ? "transparent"
                       : `var(--heat-${level(n)})`,
                   }}
-                />
+                >
+                  {hasNote && (
+                    <span
+                      aria-hidden
+                      className="size-1 rounded-full bg-foreground/70"
+                    />
+                  )}
+                </button>
               );
             })}
           </div>

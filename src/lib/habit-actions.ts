@@ -35,7 +35,9 @@ interface CompletionRow {
   note: string | null;
 }
 
-export const PAGE = 1000; // Límite de filas por request de PostgREST.
+export const PAGE = 1000;
+/** Largo máximo de una nota (igual que el `check` de la base). */
+export const NOTE_MAX = 500; // Límite de filas por request de PostgREST.
 
 function toHabit(row: HabitRow): Habit {
   return {
@@ -243,19 +245,67 @@ export function createActions(
       });
     },
 
-    /** `wasDone`: si el día ya estaba marcado (lo que muestra la UI). */
+    /**
+     * Marca o desmarca un hábito sí/no. `wasDone`: si el día ya estaba
+     * marcado (lo que muestra la UI). Si el día tiene nota, el registro no se
+     * borra: al desmarcar queda con `value = 0` (nota sin completar).
+     */
     toggleCompletion(id: string, day: string, wasDone: boolean) {
       if (day > todayKey()) return Promise.resolve();
+      const entry = data?.completions[id]?.[day];
+      const keepNote = wasDone && !!entry?.note;
       setData((d) => {
         const next = { ...d.completions[id] };
-        if (wasDone) delete next[day];
-        else next[day] = {};
+        if (keepNote) next[day] = { ...next[day], value: 0 };
+        else if (wasDone) delete next[day];
+        else next[day] = { ...(next[day]?.note && { note: next[day].note }) };
         return { ...d, completions: { ...d.completions, [id]: next } };
       });
+      const completions = supabase.from("completions");
       return run(() =>
-        wasDone
-          ? supabase.from("completions").delete().match({ habit_id: id, day })
-          : supabase.from("completions").insert({ habit_id: id, day }),
+        keepNote
+          ? completions.upsert({ habit_id: id, day, value: 0 })
+          : wasDone
+            ? completions.delete().match({ habit_id: id, day })
+            : entry
+              ? // Ya había registro (una nota sola): se marca sin perderla.
+                completions.upsert({ habit_id: id, day, value: null })
+              : completions.insert({ habit_id: id, day }),
+      );
+    },
+
+    /**
+     * Guarda la nota de un día. Sin registro previo crea uno con `value = 0`
+     * (no cuenta como completado). Al borrar la nota, un registro que no tenía
+     * nada más (`value = 0`) se elimina.
+     */
+    setNote(id: string, day: string, note: string) {
+      if (day > todayKey()) return Promise.resolve();
+      const text = note.trim().slice(0, NOTE_MAX);
+      const entry = data?.completions[id]?.[day];
+      if (!entry && !text) return Promise.resolve();
+      if ((entry?.note ?? "") === text) return Promise.resolve();
+      const remove = !text && entry?.value === 0;
+      setData((d) => {
+        const next = { ...d.completions[id] };
+        if (remove) delete next[day];
+        else {
+          const updated: Entry = { ...(next[day] ?? { value: 0 }) };
+          if (text) updated.note = text;
+          else delete updated.note;
+          next[day] = updated;
+        }
+        return { ...d, completions: { ...d.completions, [id]: next } };
+      });
+      const completions = supabase.from("completions");
+      return run(() =>
+        remove
+          ? completions.delete().match({ habit_id: id, day })
+          : completions.upsert(
+              entry
+                ? { habit_id: id, day, note: text || null }
+                : { habit_id: id, day, value: 0, note: text },
+            ),
       );
     },
 

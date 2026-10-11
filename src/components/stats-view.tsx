@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { addDays, startOfWeek, todayKey } from "@/lib/dates";
 import {
   averageValue,
   bestStreak,
+  collectNotes,
   completionRate,
   countInWindow,
   currentStreak,
@@ -20,6 +21,7 @@ import { useHabits } from "@/lib/store";
 import { ActivityHeatmap, Meter, WeeklyBars } from "./charts";
 import { DayEditor } from "./day-editor";
 import { MeasurableStats } from "./measurable-stats";
+import { RecentNotes } from "./recent-notes";
 import { Card, EmptyState, Loading, StreakBadge } from "./ui";
 
 const WINDOW_DAYS = 30;
@@ -29,6 +31,7 @@ export function StatsView() {
   const { data, actions } = useHabits();
   const today = todayKey();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const activityRef = useRef<HTMLHeadingElement>(null);
 
   const stats = useMemo(() => {
     if (!data) return null;
@@ -78,8 +81,12 @@ export function StatsView() {
       return { week, value };
     });
 
+    const notes = collectNotes(active, data.completions);
+
     return {
       perHabit,
+      notes,
+      noteDays: new Set(notes.map((n) => n.day)),
       globalCurrent: currentStreak(globalDays),
       globalBest: bestStreak(globalDays),
       rate: total === 0 ? null : done / total,
@@ -137,15 +144,19 @@ export function StatsView() {
       </div>
 
       <Card>
-        <h2 className="font-semibold">Actividad</h2>
+        <h2 className="font-semibold" ref={activityRef}>
+          Actividad
+        </h2>
         <p className="mb-3 text-xs text-muted">
-          Tocá un día para corregir lo que marcaste.
+          Tocá un día para corregir lo que marcaste o escribir notas. Los días
+          con nota llevan un punto.
         </p>
         <ActivityHeatmap
           counts={stats.counts}
           today={today}
           maxPerDay={stats.maxPerDay}
           selected={selectedDay}
+          notes={stats.noteDays}
           onSelect={(day) =>
             setSelectedDay((prev) => (prev === day ? null : day))
           }
@@ -221,6 +232,14 @@ export function StatsView() {
       </Card>
 
       <MeasurableStats data={data} today={today} />
+
+      <RecentNotes
+        notes={stats.notes}
+        onSelectDay={(day) => {
+          setSelectedDay(day);
+          activityRef.current?.scrollIntoView({ behavior: "smooth" });
+        }}
+      />
     </div>
   );
 }

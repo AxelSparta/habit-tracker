@@ -5,6 +5,7 @@ import {
   createRunner,
   fetchAll,
   nextPosition,
+  NOTE_MAX,
   PAGE,
   parseBackup,
   type Run,
@@ -177,6 +178,106 @@ describe("toggleCompletion", () => {
     await actions.toggleCompletion("a", "2026-10-01", false);
     expect(onError).toHaveBeenCalledWith("falló");
     expect(reload).toHaveBeenCalledOnce();
+  });
+});
+
+describe("toggleCompletion con notas", () => {
+  it("al desmarcar un día con nota la conserva con value 0", async () => {
+    const { actions, state, calls } = setup(
+      data([habit("a", 0)], { a: { "2026-10-01": { note: "uf" } } }),
+    );
+    await actions.toggleCompletion("a", "2026-10-01", true);
+    expect(state.data.completions.a["2026-10-01"]).toEqual({
+      value: 0,
+      note: "uf",
+    });
+    expect(calls[0]).toMatchObject({
+      op: "upsert",
+      payload: { habit_id: "a", day: "2026-10-01", value: 0 },
+    });
+  });
+
+  it("al marcar un día que sólo tenía nota, lo completa sin perderla", async () => {
+    const { actions, state, calls } = setup(
+      data([habit("a", 0)], { a: { "2026-10-01": { value: 0, note: "uf" } } }),
+    );
+    await actions.toggleCompletion("a", "2026-10-01", false);
+    expect(state.data.completions.a["2026-10-01"]).toEqual({ note: "uf" });
+    expect(calls[0]).toMatchObject({
+      op: "upsert",
+      payload: { habit_id: "a", day: "2026-10-01", value: null },
+    });
+  });
+});
+
+describe("setNote", () => {
+  it("sin registro crea uno con value 0 (no completado)", async () => {
+    const { actions, state, calls } = setup(data([habit("a", 0)]));
+    await actions.setNote("a", "2026-10-01", "  me dolía la cabeza ");
+    expect(state.data.completions.a["2026-10-01"]).toEqual({
+      value: 0,
+      note: "me dolía la cabeza",
+    });
+    expect(calls[0]).toMatchObject({
+      op: "upsert",
+      payload: {
+        habit_id: "a",
+        day: "2026-10-01",
+        value: 0,
+        note: "me dolía la cabeza",
+      },
+    });
+  });
+
+  it("en un día completado sólo actualiza la nota", async () => {
+    const { actions, state, calls } = setup(
+      data([habit("a", 0)], { a: { "2026-10-01": {} } }),
+    );
+    await actions.setNote("a", "2026-10-01", "bien");
+    expect(state.data.completions.a["2026-10-01"]).toEqual({ note: "bien" });
+    expect(calls[0].payload).toEqual({
+      habit_id: "a",
+      day: "2026-10-01",
+      note: "bien",
+    });
+  });
+
+  it("al vaciarla en un día completado manda note null", async () => {
+    const { actions, state, calls } = setup(
+      data([habit("a", 0)], { a: { "2026-10-01": { note: "bien" } } }),
+    );
+    await actions.setNote("a", "2026-10-01", "   ");
+    expect(state.data.completions.a["2026-10-01"]).toEqual({});
+    expect(calls[0].payload).toEqual({
+      habit_id: "a",
+      day: "2026-10-01",
+      note: null,
+    });
+  });
+
+  it("al vaciarla en un registro que sólo tenía la nota lo borra", async () => {
+    const { actions, state, calls } = setup(
+      data([habit("a", 0)], { a: { "2026-10-01": { value: 0, note: "x" } } }),
+    );
+    await actions.setNote("a", "2026-10-01", "");
+    expect(state.data.completions.a).toEqual({});
+    expect(calls[0].op).toBe("delete");
+  });
+
+  it("no manda nada si no cambió, si está vacía sin registro o es futura", async () => {
+    const { actions, calls } = setup(
+      data([habit("a", 0)], { a: { "2026-10-01": { note: "x" } } }),
+    );
+    await actions.setNote("a", "2026-10-01", "x ");
+    await actions.setNote("a", "2026-10-02", "");
+    await actions.setNote("a", "2999-01-01", "hola");
+    expect(calls).toEqual([]);
+  });
+
+  it("recorta las notas al largo máximo", async () => {
+    const { actions, state } = setup(data([habit("a", 0)]));
+    await actions.setNote("a", "2026-10-01", "a".repeat(NOTE_MAX + 50));
+    expect(state.data.completions.a["2026-10-01"].note).toHaveLength(NOTE_MAX);
   });
 });
 

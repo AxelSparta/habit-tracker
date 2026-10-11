@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   appliesOn,
   averageValue,
+  collectNotes,
   describeTarget,
   formatQuantity,
   sumValues,
@@ -284,5 +285,30 @@ describe("totales de hábitos medibles", () => {
     const water = { ...habit({ type: "daily" }), target: 8, unit: "vasos" };
     expect(formatQuantity(water, 1500)).toBe("1.500 vasos");
     expect(formatQuantity({ ...water, unit: undefined }, 2.5)).toBe("2,5");
+  });
+});
+
+describe("collectNotes", () => {
+  it("junta las notas de los hábitos, de la más reciente a la más vieja", () => {
+    const a = { ...habit({ type: "daily" }), id: "a" };
+    const b = { ...habit({ type: "daily" }), id: "b" };
+    const notes = collectNotes([a, b], {
+      a: {
+        "2026-09-01": { note: "vieja" },
+        "2026-09-20": {},
+        "2026-09-25": { value: 0, note: "a del 25" },
+      },
+      b: {
+        "2026-09-25": { note: "b del 25" },
+        "2026-09-26": { note: "nueva" },
+      },
+      otro: { "2026-09-30": { note: "de un hábito que no se pidió" } },
+    });
+    expect(notes.map((n) => [n.habit.id, n.day, n.note])).toEqual([
+      ["b", "2026-09-26", "nueva"],
+      ["a", "2026-09-25", "a del 25"],
+      ["b", "2026-09-25", "b del 25"],
+      ["a", "2026-09-01", "vieja"],
+    ]);
   });
 });

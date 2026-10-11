@@ -286,6 +286,27 @@ function rangeValues(
     .map(([, e]) => e.value!);
 }
 
+export interface DayNote {
+  habit: Habit;
+  day: string;
+  note: string;
+}
+
+/** Notas de los hábitos dados, de la más reciente a la más vieja. */
+export function collectNotes(
+  habits: Habit[],
+  completions: Completions,
+): DayNote[] {
+  const notes: DayNote[] = [];
+  for (const habit of habits) {
+    for (const [day, entry] of Object.entries(completions[habit.id] ?? {})) {
+      if (entry.note) notes.push({ habit, day, note: entry.note });
+    }
+  }
+  // Mismo día: respeta el orden de los hábitos.
+  return notes.sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0));
+}
+
 export function describeFrequency(frequency: Frequency): string {
   switch (frequency.type) {
     case "daily":
