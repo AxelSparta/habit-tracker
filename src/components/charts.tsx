@@ -8,6 +8,7 @@ import {
   formatShort,
   startOfWeek,
 } from "@/lib/dates";
+import { formatAmount } from "@/lib/habits";
 
 interface TipState {
   x: number;
@@ -186,8 +187,14 @@ export function ActivityHeatmap({
 
 export function WeeklyBars({
   data,
+  label = "Check-ins por semana",
+  format = (v) => `${v} check-ins`,
 }: {
   data: { week: string; value: number }[];
+  /** Descripción del gráfico para lectores de pantalla. */
+  label?: string;
+  /** Texto del valor en el tooltip. */
+  format?: (value: number) => string;
 }) {
   const tooltip = useTooltip();
   const { ref, width } = useWidth(600);
@@ -214,7 +221,7 @@ export function WeeklyBars({
         height={H}
         className="block"
         role="img"
-        aria-label="Check-ins por semana"
+        aria-label={label}
       >
         {ticks.map((t) => (
           <g key={t}>
@@ -234,7 +241,7 @@ export function WeeklyBars({
               fontSize={10}
               fill="var(--muted)"
             >
-              {t}
+              {formatAmount(t)}
             </text>
           </g>
         ))}
@@ -277,9 +284,8 @@ export function WeeklyBars({
                           Semana del {formatShort(d.week)} ·{" "}
                         </span>
                         <span className="font-medium tabular-nums">
-                          {d.value}
-                        </span>{" "}
-                        check-ins
+                          {format(d.value)}
+                        </span>
                       </>
                     ),
                   });
@@ -297,7 +303,7 @@ export function WeeklyBars({
             fontWeight={600}
             fill="var(--foreground)"
           >
-            {last.value}
+            {formatAmount(last.value)}
           </text>
         )}
       </svg>
@@ -311,10 +317,13 @@ function roundedTopBar(x: number, y: number, w: number, h: number, r: number) {
   return `M${x},${y + h} V${y + rr} Q${x},${y} ${x + rr},${y} H${x + w - rr} Q${x + w},${y} ${x + w},${y + rr} V${y + h} Z`;
 }
 
+/** Entre 2 y 5 marcas "redondas" (1, 2 o 5 × 10ⁿ) que cubren `max`. */
 function niceTicks(max: number): number[] {
-  const step = [1, 2, 5, 10, 20, 25, 50, 100].find((s) => max / s <= 4) ?? 200;
+  const raw = max / 4;
+  const pow = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 5, 10].map((m) => m * pow).find((s) => s >= raw)!;
   const ticks: number[] = [];
-  for (let t = 0; t < max + step; t += step) ticks.push(t);
+  for (let i = 0; i * step < max + step; i++) ticks.push(i * step);
   return ticks;
 }
 

@@ -33,6 +33,11 @@ export function startOfWeek(key: string): string {
   return addDays(key, -weekdayOf(key));
 }
 
+/** Primer día del mes que contiene `key`. */
+export function startOfMonth(key: string): string {
+  return `${key.slice(0, 8)}01`;
+}
+
 /** Lista de fechas desde `from` hasta `to`, ambas incluidas. */
 export function dayRange(from: string, to: string): string[] {
   const days: string[] = [];

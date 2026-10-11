@@ -220,6 +220,38 @@ export function describeTarget(habit: Habit): string | null {
   return [formatAmount(habit.target), habit.unit].filter(Boolean).join(" ");
 }
 
+/** Suma de las cantidades registradas entre `from` y `to` (incluidos). */
+export function sumValues(
+  entries: Record<string, Entry> | undefined,
+  from = "",
+  to = "9999-12-31",
+): number {
+  let sum = 0;
+  for (const [day, entry] of Object.entries(entries ?? {})) {
+    if (day >= from && day <= to) sum += entry.value ?? 0;
+  }
+  return sum;
+}
+
+const MINUTE_UNITS = ["min", "mins", "minuto", "minutos"];
+
+/**
+ * Cantidad con la unidad del hábito. Los minutos se pasan a horas cuando
+ * llegan a 60 (ej. "20 h 40 min"), así los totales de tiempo se leen mejor.
+ */
+export function formatQuantity(habit: Habit, n: number): string {
+  const unit = habit.unit?.trim();
+  if (unit && MINUTE_UNITS.includes(unit.toLowerCase()) && n >= 60) {
+    const total = Math.round(n);
+    const h = Math.floor(total / 60);
+    const m = total % 60;
+    return m === 0
+      ? `${h.toLocaleString("es-AR")} h`
+      : `${h.toLocaleString("es-AR")} h ${m} min`;
+  }
+  return [formatAmount(n), unit].filter(Boolean).join(" ");
+}
+
 /**
  * Promedio diario de un hábito medible en los últimos `days` días, contando
  * los días en que aplicaba (sin registro = 0). Hoy sólo cuenta si ya tiene

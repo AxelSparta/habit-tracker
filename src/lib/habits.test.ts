@@ -3,6 +3,8 @@ import {
   appliesOn,
   averageValue,
   describeTarget,
+  formatQuantity,
+  sumValues,
   bestStreak,
   completionRate,
   currentStreak,
@@ -250,5 +252,37 @@ describe("hábitos medibles: meta y promedio", () => {
   it("es null si no hay días para promediar", () => {
     const fresh = { ...water, createdAt: MON };
     expect(averageValue(fresh, {}, MON, 30)).toBeNull();
+  });
+});
+
+describe("totales de hábitos medibles", () => {
+  const entries = {
+    "2026-09-01": { value: 30 },
+    "2026-09-28": { value: 45 },
+    "2026-10-02": { value: 20.5 },
+    "2026-10-03": { note: "sin valor" },
+  };
+
+  it("suma todo o sólo un rango de fechas", () => {
+    expect(sumValues(entries)).toBe(95.5);
+    expect(sumValues(entries, "2026-09-28")).toBe(65.5);
+    expect(sumValues(entries, "2026-09-01", "2026-09-30")).toBe(75);
+    expect(sumValues(undefined)).toBe(0);
+  });
+
+  it("pasa los minutos a horas desde 60", () => {
+    const study = { ...habit({ type: "daily" }), target: 60, unit: "min" };
+    expect(formatQuantity(study, 45)).toBe("45 min");
+    expect(formatQuantity(study, 120)).toBe("2 h");
+    expect(formatQuantity(study, 1240)).toBe("20 h 40 min");
+    expect(formatQuantity({ ...study, unit: "Minutos" }, 90)).toBe(
+      "1 h 30 min",
+    );
+  });
+
+  it("con otras unidades muestra el número y la unidad", () => {
+    const water = { ...habit({ type: "daily" }), target: 8, unit: "vasos" };
+    expect(formatQuantity(water, 1500)).toBe("1.500 vasos");
+    expect(formatQuantity({ ...water, unit: undefined }, 2.5)).toBe("2,5");
   });
 });

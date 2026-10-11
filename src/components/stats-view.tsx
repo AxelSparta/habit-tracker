@@ -19,6 +19,7 @@ import {
 import { useHabits } from "@/lib/store";
 import { ActivityHeatmap, Meter, WeeklyBars } from "./charts";
 import { DayEditor } from "./day-editor";
+import { MeasurableStats } from "./measurable-stats";
 import { Card, EmptyState, Loading, StreakBadge } from "./ui";
 
 const WINDOW_DAYS = 30;
@@ -222,6 +223,8 @@ export function StatsView() {
           </tbody>
         </table>
       </Card>
+
+      <MeasurableStats data={data} today={today} />
     </div>
   );
 }
