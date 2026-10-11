@@ -7,8 +7,10 @@ import {
   bestStreak,
   currentStreak,
   describeFrequency,
+  doneDays,
   getGlobalDays,
   getPeriods,
+  isDone,
   reorderSubset,
   streakUnit,
   weekCount,
@@ -81,7 +83,7 @@ export function TodayView() {
   const dueToday = habits.filter((h) => appliesOn(h, day));
   const notToday = habits.filter((h) => !dueToday.includes(h));
   const doneCount = dueToday.filter((h) =>
-    data.completions[h.id]?.includes(day),
+    isDone(h, data.completions[h.id]?.[day]),
   ).length;
 
   return (
@@ -152,7 +154,7 @@ export function TodayView() {
               habit={h}
               day={day}
               today={today}
-              done={data.completions[h.id] ?? []}
+              done={doneDays(h, data.completions[h.id])}
               handle={handle}
             />
           )}
@@ -186,7 +188,7 @@ export function TodayView() {
                 habit={h}
                 day={day}
                 today={today}
-                done={data.completions[h.id] ?? []}
+                done={doneDays(h, data.completions[h.id])}
                 handle={handle}
                 disabled
               />
@@ -217,14 +219,14 @@ function HabitRow({
   habit: Habit;
   day: string;
   today: string;
-  done: string[];
+  /** Fechas en que el hábito quedó completado. */
+  done: Set<string>;
   /** Manija para reordenar arrastrando. */
   handle: ReactNode;
   disabled?: boolean;
 }) {
-  const set = new Set(done);
-  const checked = set.has(day);
-  const streak = currentStreak(getPeriods(habit, set, today));
+  const checked = done.has(day);
+  const streak = currentStreak(getPeriods(habit, done, today));
 
   return (
     <div
@@ -249,7 +251,7 @@ function HabitRow({
           <span className="block text-xs text-muted">
             {describeFrequency(habit.frequency)}
             {habit.frequency.type === "timesPerWeek" &&
-              ` · ${weekCount(set, day)}/${habit.frequency.count} ${startOfWeek(day) === startOfWeek(today) ? "esta semana" : "esa semana"}`}
+              ` · ${weekCount(done, day)}/${habit.frequency.count} ${startOfWeek(day) === startOfWeek(today) ? "esta semana" : "esa semana"}`}
           </span>
         </span>
         <StreakBadge value={streak} unit={streakUnit(habit)} />

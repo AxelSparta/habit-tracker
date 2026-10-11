@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { todayKey } from "./dates";
-import type { Frequency, Habit, HabitData } from "./types";
+import type { Completions, Entry, Frequency, Habit, HabitData } from "./types";
 
 /**
  * Lectura y escritura de los datos en Supabase, sin React: el provider de
@@ -21,11 +21,15 @@ interface HabitRow {
   created_on: string;
   archived: boolean;
   position: number;
+  target: number | null;
+  unit: string | null;
 }
 
 interface CompletionRow {
   habit_id: string;
   day: string;
+  value: number | null;
+  note: string | null;
 }
 
 export const PAGE = 1000; // Límite de filas por request de PostgREST.
@@ -39,6 +43,15 @@ function toHabit(row: HabitRow): Habit {
     createdAt: row.created_on,
     archived: row.archived,
     position: row.position,
+    ...(row.target != null && { target: row.target }),
+    ...(row.unit != null && { unit: row.unit }),
+  };
+}
+
+function toEntry(row: CompletionRow): Entry {
+  return {
+    ...(row.value != null && { value: row.value }),
+    ...(row.note != null && { note: row.note }),
   };
 }
 
@@ -51,54 +64,78 @@ function toRow(habit: Habit): HabitRow {
     created_on: habit.createdAt,
     archived: habit.archived,
     position: habit.position,
+    target: habit.target ?? null,
+    unit: habit.unit ?? null,
   };
 }
 
 export async function fetchAll(supabase: SupabaseClient): Promise<HabitData> {
   const { data: habits, error } = await supabase
     .from("habits")
-    .select("id, name, emoji, frequency, created_on, archived, position")
+    .select(
+      "id, name, emoji, frequency, created_on, archived, position, target, unit",
+    )
     .order("position")
     .order("inserted_at");
   if (error) throw error;
 
-  const completions: Record<string, string[]> = {};
+  const completions: Completions = {};
   for (let from = 0; ; from += PAGE) {
     const { data, error } = await supabase
       .from("completions")
-      .select("habit_id, day")
+      .select("habit_id, day, value, note")
       .order("day")
       .range(from, from + PAGE - 1);
     if (error) throw error;
     for (const c of data as CompletionRow[]) {
-      (completions[c.habit_id] ??= []).push(c.day);
+      (completions[c.habit_id] ??= {})[c.day] = toEntry(c);
     }
     if (data.length < PAGE) break;
   }
 
   return {
-    version: 1,
+    version: 2,
     habits: (habits as HabitRow[]).map(toHabit),
     completions,
   };
 }
 
+/** Completados de un respaldo v1 (lista de fechas) o v2 (fecha -> registro). */
+type BackupCompletions = Record<string, string[] | Record<string, Entry>>;
+
+/**
+ * Lee un respaldo JSON (v1 o v2) y lo devuelve en formato v2. En v1 cada
+ * hábito tiene la lista de fechas marcadas, que pasan a registros vacíos.
+ */
 export function parseBackup(raw: string, current: Habit[]): HabitData {
-  const data = JSON.parse(raw) as Partial<HabitData>;
-  if (!Array.isArray(data.habits) || typeof data.completions !== "object") {
+  const data = JSON.parse(raw) as {
+    habits?: Habit[];
+    completions?: BackupCompletions;
+  };
+  if (
+    !Array.isArray(data.habits) ||
+    typeof data.completions !== "object" ||
+    data.completions === null
+  ) {
     throw new Error("Formato de datos inválido");
   }
   // Los hábitos que ya existen conservan su lugar; los nuevos van al final,
   // en el orden del respaldo (los respaldos viejos no tienen `position`).
   const existing = new Map(current.map((h) => [h.id, h.position]));
   let next = nextPosition(current);
+  const completions: Completions = {};
+  for (const [id, days] of Object.entries(data.completions)) {
+    completions[id] = Array.isArray(days)
+      ? Object.fromEntries(days.map((day) => [day, {}]))
+      : days;
+  }
   return {
-    version: 1,
+    version: 2,
     habits: data.habits.map((h) => ({
       ...h,
       position: existing.get(h.id) ?? next++,
     })),
-    completions: data.completions ?? {},
+    completions,
   };
 }
 
@@ -201,10 +238,9 @@ export function createActions(
     toggleCompletion(id: string, day: string, wasDone: boolean) {
       if (day > todayKey()) return Promise.resolve();
       setData((d) => {
-        const current = d.completions[id] ?? [];
-        const next = wasDone
-          ? current.filter((x) => x !== day)
-          : [...current, day].sort();
+        const next = { ...d.completions[id] };
+        if (wasDone) delete next[day];
+        else next[day] = {};
         return { ...d, completions: { ...d.completions, [id]: next } };
       });
       return run(() =>
@@ -222,7 +258,13 @@ export function createActions(
         .upsert(backup.habits.map(toRow));
       if (error) throw error;
       const rows = Object.entries(backup.completions).flatMap(
-        ([habit_id, days]) => days.map((day) => ({ habit_id, day })),
+        ([habit_id, days]) =>
+          Object.entries(days).map(([day, entry]) => ({
+            habit_id,
+            day,
+            value: entry.value ?? null,
+            note: entry.note ?? null,
+          })),
       );
       for (let i = 0; i < rows.length; i += PAGE) {
         const { error } = await supabase

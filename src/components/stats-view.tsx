@@ -8,6 +8,7 @@ import {
   countInWindow,
   currentStreak,
   describeFrequency,
+  doneDays,
   getGlobalDays,
   getPeriods,
   streakUnit,
@@ -30,7 +31,7 @@ export function StatsView() {
     const active = data.habits.filter((h) => !h.archived);
 
     const perHabit = active.map((habit) => {
-      const done = new Set(data.completions[habit.id] ?? []);
+      const done = doneDays(habit, data.completions[habit.id]);
       const periods = getPeriods(habit, done, today);
       return {
         habit,
@@ -38,6 +39,7 @@ export function StatsView() {
         best: bestStreak(periods),
         rate: completionRate(habit, periods, today, WINDOW_DAYS),
         periods,
+        done,
         total: done.size,
       };
     });
@@ -54,8 +56,8 @@ export function StatsView() {
     }
 
     const counts = new Map<string, number>();
-    for (const h of active) {
-      for (const day of data.completions[h.id] ?? []) {
+    for (const { done } of perHabit) {
+      for (const day of done) {
         counts.set(day, (counts.get(day) ?? 0) + 1);
       }
     }

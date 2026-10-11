@@ -1,7 +1,7 @@
 "use client";
 
 import { formatLong } from "@/lib/dates";
-import { appliesOn, describeFrequency } from "@/lib/habits";
+import { appliesOn, describeFrequency, isDone } from "@/lib/habits";
 import type { HabitActions } from "@/lib/store";
 import type { HabitData } from "@/lib/types";
 
@@ -21,7 +21,7 @@ export function DayEditor({
 }) {
   const habits = data.habits.filter((h) => !h.archived && appliesOn(h, day));
   const doneCount = habits.filter((h) =>
-    data.completions[h.id]?.includes(day),
+    isDone(h, data.completions[h.id]?.[day]),
   ).length;
 
   return (
@@ -48,7 +48,7 @@ export function DayEditor({
       </div>
       <ul className="space-y-2">
         {habits.map((h) => {
-          const checked = data.completions[h.id]?.includes(day) ?? false;
+          const checked = isDone(h, data.completions[h.id]?.[day]);
           return (
             <li key={h.id}>
               <button

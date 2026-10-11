@@ -4,11 +4,13 @@ import {
   bestStreak,
   completionRate,
   currentStreak,
+  doneDays,
   getGlobalDays,
   getPeriods,
+  isDone,
   reorderSubset,
 } from "./habits";
-import type { Frequency, Habit } from "./types";
+import type { Entry, Frequency, Habit } from "./types";
 
 // 2026-09-28 es lunes.
 const MON = "2026-09-28";
@@ -23,6 +25,11 @@ function habit(frequency: Frequency, createdAt = "2026-09-01"): Habit {
     archived: false,
     position: 0,
   };
+}
+
+/** Registros sí/no marcados en las fechas dadas. */
+function entries(...days: string[]): Record<string, Entry> {
+  return Object.fromEntries(days.map((d) => [d, {}]));
 }
 
 function streaks(h: Habit, done: string[], today: string) {
@@ -108,14 +115,25 @@ describe("racha general", () => {
       id: "w",
     };
     const completions = {
-      a: ["2026-09-25", "2026-09-26", "2026-09-27"],
-      b: ["2026-09-27"],
+      a: entries("2026-09-25", "2026-09-26", "2026-09-27"),
+      b: entries("2026-09-27"),
     };
     const days = getGlobalDays([a, b, weekly], completions, MON);
     expect(currentStreak(days)).toBe(3);
 
-    const missingSunday = getGlobalDays([a, b], { ...completions, b: [] }, MON);
+    const missingSunday = getGlobalDays([a, b], { ...completions, b: {} }, MON);
     expect(currentStreak(missingSunday)).toBe(0);
+  });
+
+  it("un hábito medible sólo cuenta los días que llegó a la meta", () => {
+    const a = { ...habit({ type: "daily" }, "2026-09-26"), id: "a" };
+    const water = { ...a, id: "w", target: 8 };
+    const completions = {
+      a: entries("2026-09-26", "2026-09-27"),
+      w: { "2026-09-26": { value: 8 }, "2026-09-27": { value: 5 } },
+    };
+    const days = getGlobalDays([a, water], completions, MON);
+    expect(days.map((d) => d.status)).toEqual(["done", "missed", "pending"]);
   });
 });
 
@@ -157,5 +175,45 @@ describe("appliesOn", () => {
   it("los semanales aplican cualquier día", () => {
     const h = habit({ type: "timesPerWeek", count: 3 });
     expect(appliesOn(h, "2026-10-04")).toBe(true);
+  });
+});
+
+describe("isDone", () => {
+  const yesNo = habit({ type: "daily" });
+  const water = { ...habit({ type: "daily" }), target: 8, unit: "vasos" };
+
+  it("sin registro no está completado", () => {
+    expect(isDone(yesNo, undefined)).toBe(false);
+    expect(isDone(water, undefined)).toBe(false);
+  });
+
+  it("un hábito sí/no se completa con el registro, salvo valor 0", () => {
+    expect(isDone(yesNo, {})).toBe(true);
+    expect(isDone(yesNo, { note: "hecho" })).toBe(true);
+    expect(isDone(yesNo, { value: 0, note: "sólo nota" })).toBe(false);
+  });
+
+  it("un hábito medible se completa al llegar a la meta", () => {
+    expect(isDone(water, {})).toBe(false);
+    expect(isDone(water, { value: 7 })).toBe(false);
+    expect(isDone(water, { value: 8 })).toBe(true);
+    expect(isDone(water, { value: 10 })).toBe(true);
+  });
+});
+
+describe("rachas de hábitos medibles", () => {
+  it("los días que no llegan a la meta cortan la racha", () => {
+    const water = { ...habit({ type: "daily" }, "2026-09-24"), target: 8 };
+    const done = doneDays(water, {
+      "2026-09-24": { value: 8 },
+      "2026-09-25": { value: 9 },
+      "2026-09-26": { value: 3 },
+      "2026-09-27": { value: 8 },
+      [MON]: { value: 2 },
+    });
+    expect(done).toEqual(new Set(["2026-09-24", "2026-09-25", "2026-09-27"]));
+    const periods = getPeriods(water, done, MON);
+    expect(currentStreak(periods)).toBe(1);
+    expect(bestStreak(periods)).toBe(2);
   });
 });

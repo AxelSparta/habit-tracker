@@ -5,7 +5,7 @@ import {
   startOfWeek,
   weekdayOf,
 } from "./dates";
-import type { Frequency, Habit } from "./types";
+import type { Completions, Entry, Frequency, Habit } from "./types";
 
 /**
  * Un "período" es la unidad en la que se mide la racha de un hábito:
@@ -21,6 +21,30 @@ export interface Period {
   /** Fecha del día, o del lunes de la semana para hábitos semanales. */
   key: string;
   status: PeriodStatus;
+}
+
+/**
+ * Un día cuenta como completado si tiene registro y:
+ * - en hábitos medibles, el valor llega a la meta;
+ * - en hábitos sí/no, el valor no es 0 (sin valor = marcado). El 0 queda para
+ *   registros que sólo guardan una nota.
+ */
+export function isDone(habit: Habit, entry: Entry | undefined): boolean {
+  if (!entry) return false;
+  if (habit.target != null) return (entry.value ?? 0) >= habit.target;
+  return entry.value !== 0;
+}
+
+/** Fechas en que el hábito quedó completado: la fuente de las rachas. */
+export function doneDays(
+  habit: Habit,
+  entries: Record<string, Entry> | undefined,
+): Set<string> {
+  const days = new Set<string>();
+  for (const [day, entry] of Object.entries(entries ?? {})) {
+    if (isDone(habit, entry)) days.add(day);
+  }
+  return days;
 }
 
 export type StreakUnit = "días" | "semanas";
@@ -157,14 +181,16 @@ export interface GlobalDay {
  */
 export function getGlobalDays(
   habits: Habit[],
-  completions: Record<string, string[]>,
+  completions: Completions,
   today: string,
 ): GlobalDay[] {
   const active = habits.filter(
     (h) => !h.archived && h.frequency.type !== "timesPerWeek",
   );
   if (active.length === 0) return [];
-  const sets = new Map(active.map((h) => [h.id, new Set(completions[h.id])]));
+  const sets = new Map(
+    active.map((h) => [h.id, doneDays(h, completions[h.id])]),
+  );
   const first = active.reduce(
     (min, h) => (h.createdAt < min ? h.createdAt : min),
     today,

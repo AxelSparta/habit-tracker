@@ -68,6 +68,19 @@ function habit(id: string, position: number): Habit {
   };
 }
 
+/** Fila de `habits` tal como la devuelve Supabase. */
+function habitRow(id: string) {
+  return {
+    id,
+    name: id,
+    emoji: "✅",
+    frequency: { type: "daily" },
+    created_on: "2026-09-01",
+    archived: false,
+    position: 0,
+  };
+}
+
 /** Arma las acciones sobre un estado local, como hace el provider. */
 function setup(initial: HabitData, respond?: Responder) {
   const { client, calls } = fakeSupabase(respond);
@@ -88,7 +101,7 @@ function setup(initial: HabitData, respond?: Responder) {
 }
 
 const data = (habits: Habit[], completions = {}): HabitData => ({
-  version: 1,
+  version: 2,
   habits,
   completions,
 });
@@ -117,16 +130,16 @@ describe("createRunner", () => {
 });
 
 describe("toggleCompletion", () => {
-  it("marca el día en el estado (ordenado) e inserta la fila", async () => {
+  it("marca el día en el estado e inserta la fila", async () => {
     const { actions, state, calls } = setup(
-      data([habit("a", 0)], { a: ["2026-10-01", "2026-10-03"] }),
+      data([habit("a", 0)], { a: { "2026-10-01": {}, "2026-10-03": {} } }),
     );
     await actions.toggleCompletion("a", "2026-10-02", false);
-    expect(state.data.completions.a).toEqual([
-      "2026-10-01",
-      "2026-10-02",
-      "2026-10-03",
-    ]);
+    expect(state.data.completions.a).toEqual({
+      "2026-10-01": {},
+      "2026-10-02": {},
+      "2026-10-03": {},
+    });
     expect(calls).toEqual([
       {
         table: "completions",
@@ -139,10 +152,10 @@ describe("toggleCompletion", () => {
 
   it("desmarca el día y borra sólo esa fila", async () => {
     const { actions, state, calls } = setup(
-      data([habit("a", 0)], { a: ["2026-10-01"] }),
+      data([habit("a", 0)], { a: { "2026-10-01": {} } }),
     );
     await actions.toggleCompletion("a", "2026-10-01", true);
-    expect(state.data.completions.a).toEqual([]);
+    expect(state.data.completions.a).toEqual({});
     expect(calls[0].op).toBe("delete");
     expect(calls[0].filters).toEqual([
       ["match", [{ habit_id: "a", day: "2026-10-01" }]],
@@ -261,7 +274,41 @@ describe("parseBackup", () => {
       ["a", 3],
       ["nuevo2", 9],
     ]);
-    expect(parsed.completions).toEqual({ a: ["2026-10-01"] });
+    expect(parsed.completions).toEqual({ a: { "2026-10-01": {} } });
+  });
+
+  it("convierte un respaldo v1 (listas de fechas) a v2", () => {
+    const backup = JSON.stringify({
+      version: 1,
+      habits: [habit("a", 0)],
+      completions: { a: ["2026-10-01", "2026-10-02"], b: [] },
+    });
+    const parsed = parseBackup(backup, []);
+    expect(parsed.version).toBe(2);
+    expect(parsed.completions).toEqual({
+      a: { "2026-10-01": {}, "2026-10-02": {} },
+      b: {},
+    });
+  });
+
+  it("conserva valores y notas de un respaldo v2", () => {
+    const completions = {
+      a: { "2026-10-01": { value: 3, note: "bien" }, "2026-10-02": {} },
+    };
+    const backup = JSON.stringify({
+      version: 2,
+      habits: [{ ...habit("a", 0), target: 8, unit: "vasos" }],
+      completions,
+    });
+    const parsed = parseBackup(backup, []);
+    expect(parsed.completions).toEqual(completions);
+    expect(parsed.habits[0]).toMatchObject({ target: 8, unit: "vasos" });
+  });
+
+  it("rechaza completados nulos", () => {
+    expect(() => parseBackup('{"habits":[],"completions":null}', [])).toThrow(
+      "Formato de datos inválido",
+    );
   });
 });
 
@@ -274,18 +321,49 @@ describe("nextPosition", () => {
 
 describe("fetchAll", () => {
   it("pagina los completados hasta recibir una página incompleta", async () => {
-    const day = "2026-10-01";
     const { client, calls } = fakeSupabase((call) => {
       if (call.table === "habits") return { data: [] };
       const [from] = call.filters.find(([f]) => f === "range")![1] as number[];
       const size = from === 0 ? PAGE : 2;
       return {
-        data: Array.from({ length: size }, () => ({ habit_id: "a", day })),
+        data: Array.from({ length: size }, (_, i) => ({
+          habit_id: "a",
+          day: `día-${from + i}`,
+          value: null,
+          note: null,
+        })),
       };
     });
     const result = await fetchAll(client);
-    expect(result.completions.a).toHaveLength(PAGE + 2);
+    expect(Object.keys(result.completions.a)).toHaveLength(PAGE + 2);
     expect(calls.filter((c) => c.table === "completions")).toHaveLength(2);
+  });
+
+  it("arma los registros v2 sin campos nulos", async () => {
+    const { client } = fakeSupabase((call) =>
+      call.table === "habits"
+        ? {
+            data: [
+              { ...habitRow("a"), target: 8, unit: "vasos" },
+              { ...habitRow("b"), target: null, unit: null },
+            ],
+          }
+        : {
+            data: [
+              { habit_id: "a", day: "2026-10-01", value: 3, note: "uf" },
+              { habit_id: "b", day: "2026-10-01", value: null, note: null },
+            ],
+          },
+    );
+    const result = await fetchAll(client);
+    expect(result.version).toBe(2);
+    expect(result.habits[0]).toMatchObject({ target: 8, unit: "vasos" });
+    expect(result.habits[1]).not.toHaveProperty("target");
+    expect(result.habits[1]).not.toHaveProperty("unit");
+    expect(result.completions).toEqual({
+      a: { "2026-10-01": { value: 3, note: "uf" } },
+      b: { "2026-10-01": {} },
+    });
   });
 
   it("propaga el error de Supabase", async () => {
@@ -308,6 +386,12 @@ describe("importJSON", () => {
       PAGE,
       1,
     ]);
+    expect((uploads[0].payload as unknown[])[0]).toEqual({
+      habit_id: "a",
+      day: days[0],
+      value: null,
+      note: null,
+    });
     expect(reload).toHaveBeenCalledOnce();
   });
 

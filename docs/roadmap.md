@@ -54,20 +54,21 @@ Estadísticas y las rachas se recalculan al instante.
 Base común para hábitos medibles y notas. Conviene hacerla en un solo paso para
 no migrar dos veces.
 
-- [ ] Migración `supabase/migrations/0003_values_notes.sql`:
+- [x] Migración `supabase/migrations/0003_values_notes.sql`:
   - `habits`: `target numeric` (null = hábito sí/no) y `unit text`
     (ej. "vasos", "min").
   - `completions`: `value numeric` y `note text` (con `check` de largo, ej.
     ≤ 500).
-- [ ] `types.ts`: `Habit` suma `target?` y `unit?`; `HabitData` pasa a
+- [x] `types.ts`: `Habit` suma `target?` y `unit?`; `HabitData` pasa a
       `version: 2` con `completions: Record<habitId, Record<fecha, Entry>>`
       donde `Entry = { value?: number; note?: string }`.
-- [ ] `habits.ts`: un día cuenta como completado si existe la entrada y, en
+- [x] `habits.ts`: un día cuenta como completado si existe la entrada y, en
       hábitos medibles, `value >= target`. Las rachas no cambian de lógica, sólo
-      de fuente.
-- [ ] `store.tsx`: `fetchAll` trae `value` y `note`; `parseBackup` acepta
+      de fuente. En hábitos sí/no, `value = 0` no cuenta (deja lista la regla
+      de la fase 4 para notas sin completar).
+- [x] `store.tsx`: `fetchAll` trae `value` y `note`; `parseBackup` acepta
       respaldos v1 (lista de fechas) y los convierte a v2.
-- [ ] Tests: conversión v1 → v2 y rachas con hábitos medibles parcialmente
+- [x] Tests: conversión v1 → v2 y rachas con hábitos medibles parcialmente
       cumplidos.
 
 **Terminado cuando:** la app funciona igual que antes con datos existentes y
@@ -90,8 +91,9 @@ racha sólo cuenta los días con 8 o más.
 - [ ] Ícono de nota en cada hábito de "Hoy" (y en el panel de la fase 1) que
       abre un textarea; se guarda en `completions.note`.
 - [ ] Decidir si una nota sin completar es válida. Propuesta: sí, como una
-      entrada con `value = 0` que no cuenta para la racha (requiere ajustar la
-      regla de la fase 2: "completado" = sí/no marcado o meta alcanzada).
+      entrada con `value = 0` que no cuenta para la racha (`isDone` ya lo
+      contempla desde la fase 2). Al desmarcar un día con nota, pasar a
+      `value = 0` en vez de borrar la fila.
 - [ ] Indicador en el heatmap de los días con nota y lista de notas recientes
       por hábito en Estadísticas.
 

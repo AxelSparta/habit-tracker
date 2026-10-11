@@ -16,11 +16,24 @@ export interface Habit {
   archived: boolean;
   /** Orden manual elegido por el usuario (menor = más arriba). */
   position: number;
+  /** Meta diaria de un hábito medible; sin meta es un hábito sí/no. */
+  target?: number;
+  /** Unidad de la meta, ej. "vasos" o "min". */
+  unit?: string;
 }
 
+/** Registro de un hábito en un día. */
+export interface Entry {
+  /** Cantidad hecha (hábitos medibles). En un hábito sí/no, sin valor = marcado. */
+  value?: number;
+  note?: string;
+}
+
+/** habitId -> fecha YYYY-MM-DD -> registro de ese día. */
+export type Completions = Record<string, Record<string, Entry>>;
+
 export interface HabitData {
-  version: 1;
+  version: 2;
   habits: Habit[];
-  /** habitId -> lista de fechas YYYY-MM-DD completadas. */
-  completions: Record<string, string[]>;
+  completions: Completions;
 }
